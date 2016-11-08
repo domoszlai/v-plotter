@@ -1,0 +1,339 @@
+<html>
+   <head>
+      <title>Box2dWeb example</title>
+   </head>
+   <body>
+        <div style="position: relative;">
+         <canvas id="canvas" width="1000" height="600" 
+           style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
+         <canvas id="drawinglayer" width="1000" height="600" 
+           style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
+        </div>   
+   </body>
+   <script type="text/javascript" src="jquery-3.1.1.min.js"></script>
+   <script type="text/javascript" src="Box2D.min.js"></script>
+   <script type="text/javascript" src="Queue.js"></script>
+   <script type="text/javascript">
+
+   
+var gcodes = new Queue();
+var movements = new Queue();
+
+
+// Distance between the two motors
+d = 23;
+resolution = 0.1;
+
+var cx = 1;
+var cy = 2;
+var il1 = Math.sqrt((cx*cx) + (cy*cy));
+var il2 = Math.sqrt(((d-cx)*(d-cx)) + (cy*cy));
+var cl1 = il1;
+var cl2 = il2;
+
+
+x1 = 10;
+y1 = 10;
+x2 = 15;
+y2 = 10;
+x3 = 15;
+y3 = 15;
+x4 = 10;
+y4 = 15;
+
+
+line(cx,cy,x1,y1,false);
+line(x1,y1,x2,y2,true);
+line(x2,y2,x3,y3,true);
+line(x3,y3,x4,y4,true);
+line(x4,y4,x1,y1,true);
+
+
+function line(x1,y1,x2,y2,draw)
+{
+    if(x1==x2 && y1==y2) return;
+
+    l = Math.sqrt(((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)));
+    ns = l / resolution;
+  
+    if(x1 == x2)
+    {
+        dy = (y2 - y1) / ns;
+        var x = x1;
+        var y = y1;
+     
+        for(var i=0; i<ns; i++)
+        {
+            y += dy;
+            
+            var l1 = Math.sqrt((x*x) + (y*y));
+            var z = d - x;
+            var l2 = Math.sqrt((z*z) + (y*y));
+            
+            movements.enqueue({l1: l1-cl1, l2: l2-cl2, draw: draw});
+            
+            cl1 = l1;
+            cl2 = l2;
+            
+            cx = x;
+            cy = y;                    
+        }     
+    }
+    else
+    {
+        m = (y2 - y1) / (x2 - x1);
+        b = - x1 * m + y1;
+          
+        dx = (x2 - x1) / ns;
+
+        var x = x1;
+        
+        for(var i=0; i<ns; i++)
+        {
+            x += dx;
+            
+            var y = m * x + b;
+            var l1 = Math.sqrt((x*x) + (y*y));
+            var z = d - x;
+            var l2 = Math.sqrt((z*z) + (y*y));
+            
+            movements.enqueue({l1: l1-cl1, l2: l2-cl2, draw: draw});
+            
+            cl1 = l1;
+            cl2 = l2;
+            
+            cx = x;
+            cy = y;        
+        }
+    }
+}
+
+   
+var b2Vec2 = Box2D.Common.Math.b2Vec2
+    , b2AABB = Box2D.Collision.b2AABB
+    , b2BodyDef = Box2D.Dynamics.b2BodyDef
+    , b2Body = Box2D.Dynamics.b2Body
+    , b2FixtureDef = Box2D.Dynamics.b2FixtureDef
+    , b2Fixture = Box2D.Dynamics.b2Fixture
+    , b2World = Box2D.Dynamics.b2World
+    , b2MassData = Box2D.Collision.Shapes.b2MassData
+    , b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
+    , b2CircleShape = Box2D.Collision.Shapes.b2CircleShape
+    , b2DebugDraw = Box2D.Dynamics.b2DebugDraw
+    , b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef
+    , b2DistanceJointDef =  Box2D.Dynamics.Joints.b2DistanceJointDef
+    , b2Shape = Box2D.Collision.Shapes.b2Shape
+    , b2Joint = Box2D.Dynamics.Joints.b2Joint
+    , b2Settings = Box2D.Common.b2Settings
+    ;
+ 
+var world;
+var ctx;
+var drawingctx;
+var canvas_width;
+var canvas_height;
+ 
+//box2d to canvas scale , therefor 1 metre of box2d = 30px of canvas :)
+var scale = 30;
+ 
+var distance_joint1;
+var distance_joint2;
+var nozzle;
+ 
+//Draw a world - this method is called in a loop to redraw the world
+function draw_world(world, context) 
+{
+    world.DrawDebugData();
+}
+ 
+//Create box2d world object
+function createWorld() 
+{
+    //Gravity vector x, y - 10 m/s2 - thats earth!!
+    var gravity = new b2Vec2(0, 10);
+     
+    world = new b2World(gravity , false);
+     
+    //setup debug draw
+    var debugDraw = new b2DebugDraw();
+    debugDraw.SetSprite(document.getElementById("canvas").getContext("2d"));
+    debugDraw.SetDrawScale(scale);
+    debugDraw.SetFillAlpha(0.5);
+    debugDraw.SetLineThickness(1.0);
+    debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+     
+    world.SetDebugDraw(debugDraw);
+     
+    //create some objects
+    ground = createBox(world, 0, 19, 50 , 1, {type : b2Body.b2_staticBody});
+    var a = createBox(world, 1.00, 1, 1 , 1, {type : b2Body.b2_staticBody});
+    var b = createBox(world, 24.00, 1, 1 , 1, {type : b2Body.b2_staticBody});
+    nozzle = createBall(world, cx, cy, 1);
+     
+    //create distance joint between b and c
+    distance_joint1 = new b2DistanceJointDef();
+    distance_joint1.bodyA = a;
+    distance_joint1.bodyB = nozzle;
+    //connect the centers - center in local coordinate - relative to body is 0,0
+    distance_joint1.localAnchorA = new b2Vec2(0, 0);
+    distance_joint1.localAnchorB = new b2Vec2(0, 0);
+    //length of joint
+    distance_joint1.length = il1;
+    distance_joint1.collideConnected = true;
+
+    //create distance joint between b and c
+    distance_joint2 = new b2DistanceJointDef();
+    distance_joint2.bodyA = b;
+    distance_joint2.bodyB = nozzle;
+    //connect the centers - center in local coordinate - relative to body is 0,0
+    distance_joint2.localAnchorA = new b2Vec2(0, 0);
+    distance_joint2.localAnchorB = new b2Vec2(0, 0);
+    //length of joint
+    distance_joint2.length = il2;
+    distance_joint2.collideConnected = true;
+    
+    //add the joint to the world
+    distance_joint1 = world.CreateJoint(distance_joint1);
+    distance_joint2 = world.CreateJoint(distance_joint2);
+     
+    return world;
+}       
+ 
+//Function to create a round ball, sphere like object
+function createBall(world, x, y, radius, options) 
+{
+     //default setting
+    options = $.extend(true, {
+        'density' : 1.0 ,
+        'friction' : 1.0 ,
+        'restitution' : 0.5 ,
+         
+        'type' : b2Body.b2_dynamicBody
+    }, options);
+     
+    var body_def = new b2BodyDef();
+    var fix_def = new b2FixtureDef();
+     
+    fix_def.density = options.density || 1.0;
+    fix_def.friction = 0.5;
+    fix_def.restitution = 0.5;
+     
+    var shape = new b2CircleShape(radius);
+    fix_def.shape = shape;
+     
+    body_def.position.Set(x , y);
+     
+    body_def.linearDamping = 0.0;
+    body_def.angularDamping = 0.0;
+     
+    body_def.type = b2Body.b2_dynamicBody;
+    body_def.userData = options.user_data;
+     
+    var b = world.CreateBody( body_def );
+    b.CreateFixture(fix_def);
+     
+    return b;
+}
+ 
+//Create standard boxes of given height , width at x,y
+function createBox(world, x, y, width, height, options) 
+{
+     //default setting
+    options = $.extend(true, {
+        'density' : 1.0 ,
+        'friction' : 1.0 ,
+        'restitution' : 0.5 ,
+        'type' : b2Body.b2_dynamicBody
+    }, options);
+       
+    var body_def = new b2BodyDef();
+    var fix_def = new b2FixtureDef();
+     
+    fix_def.density = options.density;
+    fix_def.friction = options.friction;
+    fix_def.restitution = options.restitution;
+     
+    fix_def.shape = new b2PolygonShape();
+         
+    fix_def.shape.SetAsBox( width/2 , height/2 );
+     
+    body_def.position.Set(x , y);
+     
+    body_def.type = options.type;
+    body_def.userData = options.user_data;
+     
+    var b = world.CreateBody( body_def );
+    var f = b.CreateFixture(fix_def);
+     
+    return b;
+}
+ 
+/*
+    This method will draw the world again and again
+    called by settimeout , self looped
+*/
+function step() 
+{
+    var fps = 60;
+    var timeStep = 1.0/(fps * 0.8);
+     
+    //move the box2d world ahead
+    world.Step(timeStep , 8 , 3);
+    world.ClearForces();
+     
+    var m; 
+     
+    if(!movements.isEmpty())
+    {
+        m = movements.dequeue();
+        distance_joint1.SetLength(distance_joint1.GetLength() + m.l1);
+        distance_joint2.SetLength(distance_joint2.GetLength() + m.l2);
+    }
+
+    //redraw the world
+    draw_world(world , ctx);
+        
+    if(m && m.draw)
+    {
+        var pos = nozzle.GetPosition();
+        drawingctx.beginPath();
+        drawingctx.arc(pos.x*scale, pos.y*scale, resolution*scale, 0, 2*Math.PI);
+        drawingctx.fillStyle = "black";
+        drawingctx.fill();    
+    }
+        
+    //call this function again after 1/60 seconds or 16.7ms
+    setTimeout(step , 1000 / fps);
+}
+ 
+//Convert coordinates in canvas to box2d world
+function get_real(p)
+{
+    return new b2Vec2(p.x + 0, canvas_height_m - p.y);
+}
+  
+// main entry point
+$(function() 
+{
+    //first create the world
+    world = createWorld();
+     
+    var canvas = $('#canvas');
+    ctx = canvas.get(0).getContext('2d');
+
+    var drawingcanvas = $('#drawinglayer');
+    drawingctx = drawingcanvas.get(0).getContext('2d');
+    
+    //get internal dimensions of the canvas
+    canvas_width = parseInt(canvas.attr('width'));
+    canvas_height = parseInt(canvas.attr('height'));
+    canvas_height_m = canvas_height / scale;
+          
+    //start stepping
+    step();
+});
+   
+   </script>
+   
+   
+</html>
