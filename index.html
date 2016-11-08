@@ -4,9 +4,9 @@
    </head>
    <body>
         <div style="position: relative;">
-         <canvas id="canvas" width="1000" height="600" 
+         <canvas id="canvas" width="650" height="600" 
            style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
-         <canvas id="drawinglayer" width="1000" height="600" 
+         <canvas id="drawinglayer" width="650" height="600" 
            style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
         </div>   
    </body>
@@ -15,31 +15,35 @@
    <script type="text/javascript" src="Queue.js"></script>
    <script type="text/javascript">
 
-   
+      
 var gcodes = new Queue();
 var movements = new Queue();
 
+//box2d to canvas scale , therefor 1 metre of box2d = 600px of canvas :)
+var scale = 600;
 
 // Distance between the two motors
-d = 23;
-resolution = 0.1;
+d = m(1)-cm(6);
+resolution = mm(1);
 
-var cx = 1;
-var cy = 2;
+var suspensionMargin = cm(3);
+var bbox = {x: cm(10), y: cm(10), width: cm(80)-suspensionMargin, height: cm(80)-suspensionMargin};
+var cx = bbox.x-suspensionMargin;
+var cy = bbox.y-suspensionMargin;
+
 var il1 = Math.sqrt((cx*cx) + (cy*cy));
 var il2 = Math.sqrt(((d-cx)*(d-cx)) + (cy*cy));
 var cl1 = il1;
 var cl2 = il2;
 
-
-x1 = 10;
-y1 = 10;
-x2 = 15;
-y2 = 10;
-x3 = 15;
-y3 = 15;
-x4 = 10;
-y4 = 15;
+x1 = cm(10)-suspensionMargin;
+y1 = cm(10)-suspensionMargin;
+x2 = cm(15)-suspensionMargin;
+y2 = cm(10)-suspensionMargin;
+x3 = cm(15)-suspensionMargin;
+y3 = cm(15)-suspensionMargin;
+x4 = cm(10)-suspensionMargin;
+y4 = cm(15)-suspensionMargin;
 
 
 line(cx,cy,x1,y1,false);
@@ -53,12 +57,12 @@ function line(x1,y1,x2,y2,draw)
 {
     if(x1==x2 && y1==y2) return;
 
-    l = Math.sqrt(((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)));
-    ns = l / resolution;
+    var l = Math.sqrt(((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)));
+    var ns = Math.ceil(l / resolution);
   
     if(x1 == x2)
     {
-        dy = (y2 - y1) / ns;
+        var dy = (y2 - y1) / ns;
         var x = x1;
         var y = y1;
      
@@ -81,10 +85,10 @@ function line(x1,y1,x2,y2,draw)
     }
     else
     {
-        m = (y2 - y1) / (x2 - x1);
-        b = - x1 * m + y1;
+        var m = (y2 - y1) / (x2 - x1);
+        var b = - x1 * m + y1;
           
-        dx = (x2 - x1) / ns;
+        var dx = (x2 - x1) / ns;
 
         var x = x1;
         
@@ -132,10 +136,7 @@ var ctx;
 var drawingctx;
 var canvas_width;
 var canvas_height;
- 
-//box2d to canvas scale , therefor 1 metre of box2d = 30px of canvas :)
-var scale = 30;
- 
+  
 var distance_joint1;
 var distance_joint2;
 var nozzle;
@@ -165,10 +166,10 @@ function createWorld()
     world.SetDebugDraw(debugDraw);
      
     //create some objects
-    ground = createBox(world, 0, 19, 50 , 1, {type : b2Body.b2_staticBody});
-    var a = createBox(world, 1.00, 1, 1 , 1, {type : b2Body.b2_staticBody});
-    var b = createBox(world, 24.00, 1, 1 , 1, {type : b2Body.b2_staticBody});
-    nozzle = createBall(world, cx, cy, 1);
+    ground = createBox(world, m(0.5), m(1), m(1), cm(3), {type : b2Body.b2_staticBody});
+    var a = createBox(world, suspensionMargin, suspensionMargin, cm(3) , cm(3), {type : b2Body.b2_staticBody});
+    var b = createBox(world, m(1)-suspensionMargin, suspensionMargin, cm(3), cm(3), {type : b2Body.b2_staticBody});
+    nozzle = createBall(world, cx+suspensionMargin, cy+suspensionMargin, cm(3/2));
      
     //create distance joint between b and c
     distance_joint1 = new b2DistanceJointDef();
@@ -255,7 +256,7 @@ function createBox(world, x, y, width, height, options)
      
     fix_def.shape = new b2PolygonShape();
          
-    fix_def.shape.SetAsBox( width/2 , height/2 );
+    fix_def.shape.SetAsBox(width/2, height/2);
      
     body_def.position.Set(x , y);
      
@@ -267,51 +268,68 @@ function createBox(world, x, y, width, height, options)
      
     return b;
 }
- 
-/*
-    This method will draw the world again and again
-    called by settimeout , self looped
-*/
+
 function step() 
 {
     var fps = 60;
     var timeStep = 1.0/(fps * 0.8);
      
+    var m; 
+    var sposx = nozzle.GetPosition().x;
+    var sposy = nozzle.GetPosition().y;
+	
+    if(!movements.isEmpty())
+    {
+	    spos = nozzle.GetPosition();
+        m = movements.dequeue();
+        distance_joint1.SetLength(distance_joint1.GetLength() + m.l1);
+        distance_joint2.SetLength(distance_joint2.GetLength() + m.l2);
+    }	 
+	 
     //move the box2d world ahead
     world.Step(timeStep , 8 , 3);
     world.ClearForces();
      
-    var m; 
-     
-    if(!movements.isEmpty())
-    {
-        m = movements.dequeue();
-        distance_joint1.SetLength(distance_joint1.GetLength() + m.l1);
-        distance_joint2.SetLength(distance_joint2.GetLength() + m.l2);
-    }
-
     //redraw the world
     draw_world(world , ctx);
         
     if(m && m.draw)
     {
         var pos = nozzle.GetPosition();
+		
         drawingctx.beginPath();
-        drawingctx.arc(pos.x*scale, pos.y*scale, resolution*scale, 0, 2*Math.PI);
+		drawingctx.moveTo(sposx, sposy);
+        drawingctx.lineTo(pos.x, pos.y);
+		drawingctx.strokeStyle = "black"; 
+        drawingctx.stroke(); 
+		
+		/*
+        drawingctx.beginPath();
+        drawingctx.arc(pos.x, pos.y, resolution/2, 0, 2*Math.PI);
         drawingctx.fillStyle = "black";
-        drawingctx.fill();    
+        drawingctx.fill(); 
+		*/		
     }
         
     //call this function again after 1/60 seconds or 16.7ms
     setTimeout(step , 1000 / fps);
 }
  
-//Convert coordinates in canvas to box2d world
-function get_real(p)
+function mm(d)
 {
-    return new b2Vec2(p.x + 0, canvas_height_m - p.y);
+	return d/1000;
 }
-  
+
+function cm(d)
+{
+	return d/100;
+}
+
+function m(d)
+{
+	return d;
+}
+
 // main entry point
 $(function() 
 {
@@ -323,7 +341,14 @@ $(function()
 
     var drawingcanvas = $('#drawinglayer');
     drawingctx = drawingcanvas.get(0).getContext('2d');
-    
+    drawingctx.scale(scale,scale);
+	drawingctx.lineWidth=mm(1);
+	
+	drawingctx.beginPath();
+	drawingctx.rect(bbox.x, bbox.y, bbox.width, bbox.height);
+	drawingctx.strokeStyle = "black";
+	drawingctx.stroke();  	
+	
     //get internal dimensions of the canvas
     canvas_width = parseInt(canvas.attr('width'));
     canvas_height = parseInt(canvas.attr('height'));
