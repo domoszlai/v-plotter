@@ -24,7 +24,7 @@ var nozzle;
     ;
   
 //Create box2d world object
-function createWorld(scale) 
+function createWorld(scale,homex,homey,il1,il2) 
 {
     //Gravity vector x, y - 10 m/s2 - thats earth!!
     var gravity = new b2Vec2(0, 10);

@@ -1,6 +1,6 @@
 function parseGCode(text)
 {
-	var gcodes = new Queue();	
+	var gcodes = [];	
 
 	text = trimAll(text);
 	
@@ -16,7 +16,7 @@ function parseGCode(text)
 		{
 			var value = parseInt(text.substr(1));
 			gcode = {args: {}, type: "G"+value};
-			gcodes.enqueue(gcode);
+			gcodes.push(gcode);
 			if(n != -1)
 			{
 				gcode.N = n;
@@ -27,7 +27,7 @@ function parseGCode(text)
 		{
 			var value = parseInt(text.substr(1));
 			gcode = {args: {}, type: "M"+value};
-			gcodes.enqueue(gcode);
+			gcodes.push(gcode);
 			if(n != -1)
 			{
 				gcode.N = n;
@@ -50,7 +50,7 @@ function parseGCode(text)
 			if(newLine)
 			{
 				gcode = {args: {}, type: gcode.type};
-				gcodes.enqueue(gcode);				
+				gcodes.push(gcode);				
 			}
 		
 			var value = parseFloat(text.substr(1));

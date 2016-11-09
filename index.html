@@ -28,21 +28,26 @@
            style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
         </div>   
 		<div id="sidebar">GCode:</br></br>
-			<textarea id="gcodes" rows="40" cols="40">
-G17 G20 G90 G94 G54
-G0 Z0.25
-X-0.5 Y0.
-Z0.1
-G01 Z0. F5.
-G02 X0. Y0.5 I0.5 J0. F2.5
-X0.5 Y0. I0. J-0.5
-X0. Y-0.5 I-0.5 J0.
-X-0.5 Y0. I0. J0.5
-G01 Z0.1 F5.
-G00 X0. Y0. Z0.25
+			<textarea id="gcode" rows="40" cols="40">
+G17
+G90
+G0 Z10
+G0 X0 Y0
+M3
+G4 P2000.000000
+G00 Z10
+G00 X3.5278 Y3.5278
+G01 Z0 F10.00
+G01 X38.8056 Y3.5278
+G01 X38.8056 Y38.8056
+G01 X3.5278 Y38.8056
+G01 X3.5278 Y3.5278
+G0 Z10
+M5
+M2
 			</textarea>
 			</br>
-			<input type="button" value="Run" onClick="run();">
+			<input type="button" value="Run" onClick="runGCode();">
 		</div>
 		<div id="cleared"></div>
 	</div>  
@@ -52,9 +57,9 @@ G00 X0. Y0. Z0.25
     <script type="text/javascript" src="Queue.js"></script>
 	<script type="text/javascript" src="gcode.js"></script>
 	<script type="text/javascript" src="engine.js"></script>
+    <script type="text/javascript" src="interpreter.js"></script>
     <script type="text/javascript">
 
-var gcodes = new Queue();
 var movements = new Queue();
 
 var world;
@@ -76,26 +81,10 @@ resolution = mm(1);
 // the actual drawing area in the world
 var bbox = {x: cm(10), y: cm(10), width: cm(80)-suspensionMargin, height: cm(80)-suspensionMargin};
 
+// lengths for home position
 var il1 = length1(0,0);
 var il2 = length2(0,0);
-var cl1 = il1;
-var cl2 = il2;
-
-x1 = cm(0);
-y1 = cm(0);
-x2 = cm(5);
-y2 = cm(0);
-x3 = cm(5);
-y3 = cm(5);
-x4 = cm(0);
-y4 = cm(5);
-
-line(0,0,x1,y1,false);
-line(x1,y1,x2,y2,true);
-line(x2,y2,x3,y3,true);
-line(x3,y3,x4,y4,true);
-line(x4,y4,x1,y1,true);
-
+ 
 function length1(x,y)
 {
     x += bbox.x-suspensionMargin;
@@ -110,57 +99,29 @@ function length2(x,y)
     return Math.sqrt(((d-x)*(d-x)) + (y*y));
 }
 
-function line(x1,y1,x2,y2,draw)
+// Coordinate transformation
+function toLengths(points)
 {
-    if(x1==x2 && y1==y2) return;
+    movements = new Queue();
+    
+    var cl1 = il1;
+    var cl2 = il2;
 
-    var l = Math.sqrt(((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)));
-    var ns = Math.ceil(l / resolution);
-  
-    if(x1 == x2)
+    for(var i=0; i<points.length; i++)
     {
-        var dy = (y2 - y1) / ns;
-        var x = x1;
-        var y = y1;
-     
-        for(var i=0; i<ns; i++)
-        {
-            y += dy;
-            
-            var l1 = length1(x,y);
-            var l2 = length2(x,y);
-            
-            movements.enqueue({l1: l1-cl1, l2: l2-cl2, draw: draw});
-            
-            cl1 = l1;
-            cl2 = l2;
-        }     
-    }
-    else
-    {
-        var m = (y2 - y1) / (x2 - x1);
-        var b = - x1 * m + y1;
-          
-        var dx = (x2 - x1) / ns;
+        var x = points[i].x;
+        var y = points[i].y;
 
-        var x = x1;
+        var l1 = length1(x,y);
+        var l2 = length2(x,y);
         
-        for(var i=0; i<ns; i++)
-        {
-            x += dx;
-            
-            var y = m * x + b;
-            var l1 = length1(x,y);
-            var l2 = length2(x,y);
-            
-            movements.enqueue({l1: l1-cl1, l2: l2-cl2, draw: draw});
-            
-            cl1 = l1;
-            cl2 = l2;
-        }
+        movements.enqueue({l1: l1-cl1, l2: l2-cl2, draw: points[i].drawing});
+        
+        cl1 = l1;
+        cl2 = l2;
     }
 }
-      
+
 function step() 
 {
     var timeStep = 1.0/(fps * 0.8);
@@ -197,12 +158,26 @@ function step()
     //call this function again after 1/60 seconds or 16.7ms
     setTimeout(step , 1000 / fps);
 }  
+
+function runGCode()
+{
+    var text = document.getElementById("gcode").value;
+    var gcodes = parseGCode(text);
+    
+    // go home a the end
+    gcodes.push({type: 'G0', args: {X:0,Y:0}});
+    gcodes.push({type: 'G0', args: {Z:0}});
+    
+    var inter = new interpreter(gcodes);
+    var points = inter.toPoints();
+    toLengths(points);
+}
   
 // main entry point
 $(function() 
 {
     //first create the world
-    world = createWorld(scale);
+    world = createWorld(scale,bbox.x,bbox.y,il1,il2);
      
     var canvas = $('#canvas');
     ctx = canvas.get(0).getContext('2d');
