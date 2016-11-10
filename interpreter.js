@@ -1,6 +1,7 @@
 
-// coordinates are in mm
-function interpreter(gcodes, drawz = 0, currentX = 0, currentY = 0, currentZ = 0) {
+// coordinates and resolution are in mm
+// resolution is the minimal head movement bee line
+function interpreter(gcodes, resolution, drawz = 0, currentX = 0, currentY = 0, currentZ = 0) {
     
     this.points = [];
         
@@ -36,16 +37,29 @@ function interpreter(gcodes, drawz = 0, currentX = 0, currentY = 0, currentZ = 0
                     break;
                 case 'G0':
                 case 'G1':
-                    var newX = gcode.args.X ? this.updateCoordinate(currentX, this.toMM(gcode.args.X)) : currentX;
-                    var newY = gcode.args.Y ? this.updateCoordinate(currentY, this.toMM(gcode.args.Y)) : currentY;
-                    var newZ = gcode.args.Z ? this.updateCoordinate(currentZ, this.toMM(gcode.args.Z)) : currentZ;
+                    var newX = typeof gcode.args.X !== 'undefined' ? this.updateCoordinate(currentX, this.toMM(gcode.args.X)) : currentX;
+                    var newY = typeof gcode.args.Y !== 'undefined' ? this.updateCoordinate(currentY, this.toMM(gcode.args.Y)) : currentY;
+                    var newZ = typeof gcode.args.Z !== 'undefined' ? this.updateCoordinate(currentZ, this.toMM(gcode.args.Z)) : currentZ;
                     
-                    // we draw only if both the source and target coordinates touch the canvas
+                    // we draw only if both at the source and target coordinates touch the canvas
                     var drawing = currentZ <= drawz && newZ <= drawz;
                     
                     this.lineTo(newX, newY, drawing);
                     currentZ = newZ;
                     break;
+                case 'G2':
+                case 'G3':
+                    
+                    var cw = gcode.type == 'G2';
+                    
+                    // All of these are obligatory
+                    
+                    var newX = this.toMM(gcode.args.X);
+                    var newY = this.toMM(gcode.args.Y);
+                    var cx = currentX + this.toMM(gcode.args.I);
+                    var cy = currentY + this.toMM(gcode.args.J);
+                    
+                    
                     
                 default:
                     // ignore everything else
@@ -56,14 +70,16 @@ function interpreter(gcodes, drawz = 0, currentX = 0, currentY = 0, currentZ = 0
         return this.points;
     }
 
-    this.lineTo = function(x2, y2, drawing){
-        
+    this.lineTo = function(x2, y2, drawing)
+    {
         var x1 = currentX;
         var y1 = currentY;
         
         if(x1==x2 && y1==y2) return;
 
-        var l = Math.sqrt(((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)));
+        // length of the line
+        var l = Math.sqrt(Math.pow(x2 - x1,2) + Math.pow(y2 - y1,2));
+        // the number of splits needed according to resolution
         var ns = Math.ceil(l / resolution);
       
         if(x1 == x2)
@@ -76,10 +92,7 @@ function interpreter(gcodes, drawz = 0, currentX = 0, currentY = 0, currentZ = 0
             {
                 y += dy;
                                 
-                this.points.push({x: x-currentX, y: y-currentY, drawing: drawing});
-                
-                currentX = x;
-                currentY = y;
+                this.points.push({x: x, y: y, drawing: drawing});
             }     
         }
         else
@@ -96,10 +109,7 @@ function interpreter(gcodes, drawz = 0, currentX = 0, currentY = 0, currentZ = 0
                 x += dx;                
                 var y = m * x + b;
                 
-                this.points.push({x: x-currentX, y: y-currentY, drawing: drawing});
-                
-                currentX = x;
-                currentY = y;
+                this.points.push({x: x, y: y, drawing: drawing});                
             }
         }
 
@@ -107,6 +117,32 @@ function interpreter(gcodes, drawz = 0, currentX = 0, currentY = 0, currentZ = 0
         currentY = y2;
     }        
         
+        /*
+    this.arcTo(x2, y2, cx, cy, drawing)
+    {
+        var x1 = currentX;
+        var y1 = currentY;
+
+        // the distance betwwen the statr and end point bee line
+        var d = Math.sqrt(Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2));
+        
+        // radius of the circle
+        var r = Math.sqrt(Math.pow(cx-x1, 2) + Math.pow(cy-y1, 2));
+        
+        // arc angle by cosinus law
+        var angle = Math.acos(1-(d*d/2*r*r);
+        
+        // length of the arc
+        var l = r * angle;
+        
+        // the number of splits needed according to resolution
+        var ns = Math.ceil(l / resolution);
+        
+        x1 - cx = r * Math.cos(t);
+        
+        
+    }    
+        */
     this.updateCoordinate = function(c, newc)
     {
         if(this.isAbsolute)
@@ -122,14 +158,13 @@ function interpreter(gcodes, drawz = 0, currentX = 0, currentY = 0, currentZ = 0
     this.toMM = function(d){
         if(this.isInch)
         {
-            return mm(d*2.54);
+            return d*2.54;
         }
         else
         {
-            return mm(d);    
+            return d;    
         }
     }
-
 }
 
 

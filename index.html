@@ -36,12 +36,12 @@ G0 X0 Y0
 M3
 G4 P2000.000000
 G00 Z10
-G00 X3.5278 Y3.5278
+G00 X35.278 Y35.278
 G01 Z0 F10.00
-G01 X38.8056 Y3.5278
-G01 X38.8056 Y38.8056
-G01 X3.5278 Y38.8056
-G01 X3.5278 Y3.5278
+G01 X388.056 Y35.278
+G01 X388.056 Y388.056
+G01 X35.278 Y388.056
+G01 X35.278 Y35.278
 G0 Z10
 M5
 M2
@@ -75,9 +75,6 @@ var fps = 60;
 // distance between the two motors
 d = m(1)-cm(6);
 
-// the smallest visible distance
-resolution = mm(1);
-
 // the actual drawing area in the world
 var bbox = {x: cm(10), y: cm(10), width: cm(80)-suspensionMargin, height: cm(80)-suspensionMargin};
 
@@ -109,13 +106,14 @@ function toLengths(points)
 
     for(var i=0; i<points.length; i++)
     {
-        var x = points[i].x;
-        var y = points[i].y;
+        // Points are in mm, convert them to meter as box2d likes
+        var x = mm(points[i].x);
+        var y = mm(points[i].y);
 
         var l1 = length1(x,y);
         var l2 = length2(x,y);
         
-        movements.enqueue({l1: l1-cl1, l2: l2-cl2, draw: points[i].drawing});
+        movements.enqueue({l1: l1-cl1, l2: l2-cl2, drawing: points[i].drawing});
         
         cl1 = l1;
         cl2 = l2;
@@ -144,7 +142,7 @@ function step()
     //redraw the world
 	world.DrawDebugData();
         
-    if(m && m.draw)
+    if(m && m.drawing)
     {
         var pos = nozzle.GetPosition();
 		
@@ -168,7 +166,7 @@ function runGCode()
     gcodes.push({type: 'G0', args: {X:0,Y:0}});
     gcodes.push({type: 'G0', args: {Z:0}});
     
-    var inter = new interpreter(gcodes);
+    var inter = new interpreter(gcodes, 0.5); // resolution is 0.5 mm
     var points = inter.toPoints();
     toLengths(points);
 }
