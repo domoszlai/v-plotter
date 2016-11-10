@@ -52,15 +52,20 @@ function interpreter(gcodes, resolution, drawz = 0, currentX = 0, currentY = 0, 
                     
                     var cw = gcode.type == 'G2';
                     
-                    // All of these are obligatory
+                    // X,Y,I and J are obligatory
                     
-                    var newX = this.toMM(gcode.args.X);
-                    var newY = this.toMM(gcode.args.Y);
+                    var newX = this.updateCoordinate(currentX, this.toMM(gcode.args.X));
+                    var newY = this.updateCoordinate(currentY, this.toMM(gcode.args.Y));
+                    var newZ = typeof gcode.args.Z !== 'undefined' ? this.updateCoordinate(currentZ, this.toMM(gcode.args.Z)) : currentZ;                    
                     var cx = currentX + this.toMM(gcode.args.I);
                     var cy = currentY + this.toMM(gcode.args.J);
+
+                    // we draw only if both at the source and target coordinates touch the canvas
+                    var drawing = currentZ <= drawz && newZ <= drawz;
                     
-                    
-                    
+                    this.arcTo(newX, newY, cx, cy, cw, drawing);
+                    currentZ = newZ;
+                    break;
                 default:
                     // ignore everything else
                     break;
@@ -117,8 +122,7 @@ function interpreter(gcodes, resolution, drawz = 0, currentX = 0, currentY = 0, 
         currentY = y2;
     }        
         
-        /*
-    this.arcTo(x2, y2, cx, cy, drawing)
+    this.arcTo = function(x2, y2, cx, cy, cw, drawing)
     {
         var x1 = currentX;
         var y1 = currentY;
@@ -130,7 +134,7 @@ function interpreter(gcodes, resolution, drawz = 0, currentX = 0, currentY = 0, 
         var r = Math.sqrt(Math.pow(cx-x1, 2) + Math.pow(cy-y1, 2));
         
         // arc angle by cosinus law
-        var angle = Math.acos(1-(d*d/2*r*r);
+        var angle = Math.acos(1-(d*d/2*r*r));
         
         // length of the arc
         var l = r * angle;
@@ -138,11 +142,30 @@ function interpreter(gcodes, resolution, drawz = 0, currentX = 0, currentY = 0, 
         // the number of splits needed according to resolution
         var ns = Math.ceil(l / resolution);
         
-        x1 - cx = r * Math.cos(t);
+        // angle step
+        var dangle = angle / ns;
+        if(!cw) dangle *= -1;
         
+        // angle for (x1,y1) on the circle
+        var angle1 = Math.atan2(y1 - cy, x1 - cx);
+
+        // Current angle
+        var cangle = angle1;
         
+        for(var i=0; i<ns; i++)
+        {
+            cangle += dangle;
+            
+            var x = cx + r * Math.cos(cangle);                
+            var x = cx + r * Math.sin(cangle);
+            
+            this.points.push({x: x, y: y, drawing: drawing});                
+        }
+        
+        currentX = x2;
+        currentY = y2;
     }    
-        */
+        
     this.updateCoordinate = function(c, newc)
     {
         if(this.isAbsolute)
