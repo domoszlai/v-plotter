@@ -126,29 +126,38 @@ function interpreter(gcodes, resolution, drawz = 0, currentX = 0, currentY = 0, 
     {
         var x1 = currentX;
         var y1 = currentY;
-
-        // the distance betwwen the statr and end point bee line
-        var d = Math.sqrt(Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2));
         
         // radius of the circle
         var r = Math.sqrt(Math.pow(cx-x1, 2) + Math.pow(cy-y1, 2));
+                
+        // calculate angles
+        var angle1 = this.calcAngle(cx, cy, x1, y1);
+        var angle2 = this.calcAngle(cx, cy, x2, y2);
         
-        // arc angle by cosinus law
-        var angle = Math.acos(1-(d*d/2*r*r));
-        
+        if(angle2 == 0) angle2 = Math.PI * 2;
+
+        var sweepAngle = Math.abs(angle2 - angle1);
+
+        // angle of the arc
+        if (!cw && angle2 < angle1)
+        {
+            sweepAngle = Math.PI * 2 - sweepAngle;
+        }
+        else if (cw && angle2 > angle1)
+        {
+            sweepAngle = Math.PI * 2 - sweepAngle;
+        }
+                
         // length of the arc
-        var l = r * angle;
+        var l = r * sweepAngle;
         
         // the number of splits needed according to resolution
         var ns = Math.ceil(l / resolution);
         
         // angle step
-        var dangle = angle / ns;
-        if(!cw) dangle *= -1;
+        var dangle = sweepAngle / ns;
+        if(cw) dangle *= -1;
         
-        // angle for (x1,y1) on the circle
-        var angle1 = Math.atan2(y1 - cy, x1 - cx);
-
         // Current angle
         var cangle = angle1;
         
@@ -157,7 +166,7 @@ function interpreter(gcodes, resolution, drawz = 0, currentX = 0, currentY = 0, 
             cangle += dangle;
             
             var x = cx + r * Math.cos(cangle);                
-            var x = cx + r * Math.sin(cangle);
+            var y = cy + r * Math.sin(cangle);
             
             this.points.push({x: x, y: y, drawing: drawing});                
         }
@@ -165,7 +174,18 @@ function interpreter(gcodes, resolution, drawz = 0, currentX = 0, currentY = 0, 
         currentX = x2;
         currentY = y2;
     }    
+      
+    this.calcAngle = function(x1,y1,x2,y2)
+    {
+        var dx = x2 - x1;
+        var dy = y2 - y1;
         
+        var angle = Math.atan2(dy, dx);
+        if(angle<0) angle += Math.PI * 2;
+        
+        return angle;
+    }
+      
     this.updateCoordinate = function(c, newc)
     {
         if(this.isAbsolute)
