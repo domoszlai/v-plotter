@@ -2029,9 +2029,9 @@ M2
     <script type="text/javascript" src="jquery-3.1.1.min.js"></script>
     <script type="text/javascript" src="Box2d.min.js"></script>
     <script type="text/javascript" src="Queue.js"></script>
-	<script type="text/javascript" src="gcode.js"></script>
-	<script type="text/javascript" src="engine.js"></script>
-    <script type="text/javascript" src="interpreter.js"></script>
+    <script type="text/javascript" src="node_modules/gcode.js"></script>
+    <script type="text/javascript" src="node_modules/interpreter.js"></script>
+    <script type="text/javascript" src="engine.js"></script>
     <script type="text/javascript">
 
 var movements = new Queue();
@@ -2136,7 +2136,7 @@ function runGCode()
     var text = document.getElementById("gcode").value;
     var gcodes = parseGCode(text);
     
-    // go home a the end
+    // go home at the end
     gcodes.push({type: 'G0', args: {X:0,Y:0}});
     gcodes.push({type: 'G0', args: {Z:0}});
     
