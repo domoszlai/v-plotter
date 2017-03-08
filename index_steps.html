@@ -9384,6 +9384,9 @@ var fps = 60;
 // distance between the two motors
 d = m(1)-cm(6);
 
+// Stepper motor resolution (mm per one step)
+var steplength = 0.2;
+
 // the actual drawing area in the world
 var bbox = {x: cm(10), y: cm(10), width: cm(80)-suspensionMargin, height: cm(80)-suspensionMargin};
 
@@ -9403,30 +9406,6 @@ function length2(x,y)
     x += bbox.x-suspensionMargin;
     y += bbox.y-suspensionMargin;
     return Math.sqrt(((d-x)*(d-x)) + (y*y));
-}
-
-// Coordinate transformation
-function toLengths(points)
-{
-    movements = new Queue();
-    
-    var cl1 = il1;
-    var cl2 = il2;
-
-    for(var i=0; i<points.length; i++)
-    {
-        // Points are in mm, convert them to meter as box2d likes
-        var x = mm(points[i].x);
-        var y = mm(points[i].y);
-
-        var l1 = length1(x,y);
-        var l2 = length2(x,y);
-        
-        movements.enqueue({l1: l1-cl1, l2: l2-cl2, drawing: points[i].drawing});
-        
-        cl1 = l1;
-        cl2 = l2;
-    }
 }
 
 function step() 
@@ -9489,7 +9468,7 @@ function runSteps()
     for(var i=0; i<steps.length; i++)
     {
 		var onestep  = steps[i];
-		movements.enqueue({l1: onestep[0]*0.2/1000, l2: onestep[1]*0.2/1000, drawing: onestep[2] != 0});
+		movements.enqueue({l1: onestep[0]*steplength/1000, l2: onestep[1]*steplength/1000, drawing: onestep[2] != 0});
 	}
 }
   
