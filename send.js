@@ -12,8 +12,12 @@ main();
 // distance between the two motors
 var d = m(1)-cm(6);
 
+// the distance between the edge of the world and the middle of the suspension boxes. 
+// make it cm(0) for real world, and cm(3) for the simulator
+var suspensionMargin = cm(0);
+
 // The actual drawing area. (0,0) is supposed to be the center of the shaft of the left motor
-var bbox = {x: cm(10), y: cm(10), width: cm(80), height: cm(80)};
+var bbox = {x: cm(10), y: cm(10), width: cm(80)-suspensionMargin, height: cm(80)-suspensionMargin};
 
 // Split paths around this length (mm)
 var resolution = 0.5;
@@ -43,25 +47,25 @@ function mm(d)
 
 function cm(d)
 {
-	return d/10;
+	return d*10;
 }
 
 function m(d)
 {
-	return d/1000;
+	return d*1000;
 }
 
 function length1(x,y)
 {
-    x += bbox.x;
-    y += bbox.y;
+    x += bbox.x-suspensionMargin;
+    y += bbox.y-suspensionMargin;
     return Math.sqrt((x*x) + (y*y));
 }
 
 function length2(x,y)
 {
-    x += bbox.x;
-    y += bbox.y;
+    x += bbox.x-suspensionMargin;
+    y += bbox.y-suspensionMargin;
     return Math.sqrt(((d-x)*(d-x)) + (y*y));
 }
 
@@ -107,6 +111,7 @@ function processGCode(err, data)
 		
 		var inter = new interpreter.interpreter(gcodes, resolution);
 		var points = inter.toPoints();
+			
 		var movements = toLengths(points);
 		
 		var l1error = 0;
@@ -117,26 +122,15 @@ function processGCode(err, data)
 		for (var idx in movements)
 		{
 			var m = movements[idx];
-			
-			/*
-			process.stdout.write(JSON.stringify(m));
-			process.stdout.write("\n");
-			*/
-			
+						
 			// Accumulate the error, and try to correct it at the next step
 			var l1steps = Math.round((m.l1+l1error)/steplength);
 			var l2steps = Math.round((m.l2+l2error)/steplength);
-			
+							
 			l1error += m.l1 - l1steps * steplength;
 			l2error += m.l2 - l2steps * steplength;
 			
 			lines.push(l1steps + " " + l2steps + " " + (m.drawing ? "1" : "0") + "\n")
-			
-			/*
-			var m2 = {l1steps: l1steps, l2steps: l2steps, l1error: l1error, l2error: l2error};
-			process.stdout.write(JSON.stringify(m2));
-			process.stdout.write("\n");
-			*/
 		}		
 		
 		port.open(function (err) {
@@ -145,7 +139,7 @@ function processGCode(err, data)
 			}
 
 			for(var idx in lines)
-			{
+			{			
 				port.write(lines[idx]);
 			}
 		});
