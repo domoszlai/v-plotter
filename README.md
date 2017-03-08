@@ -6,7 +6,7 @@ It is also a very nice way to test my SVG to GCode converter, [juicy-gcode](http
 
 ## Usage
 
-Open `index.html` in a web browser, copy past some gcode (or try the default one) into the textarea and push the run button.
+Open `index-gocde.html` in a web browser, copy past some gcode (or try the default one) into the textarea and push the run button.
 The plotter start to draw in a realistic way right away.
 
 Keep in mind that the drawing area of the plotter is 80cm x 80cm. Out of this area the plotter bacomes unrealistic as I used
@@ -21,10 +21,10 @@ For this feature install the `serialport` module
 
 then type
 
-`node send.js gcodefile`
+`node gensteps.js gcodefile`
 
 You probably also want to configure the sender beforehand, e.g. the resulotion of the stepper motor, serial port parameters, etc...
-The configuration parameters can be found in `send.js`.
+The configuration parameters can be found in `genstep.js`.
 
 ## Limitations
 
