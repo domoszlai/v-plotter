@@ -1,8 +1,7 @@
 var fs = require('fs');
-var SerialPort = require("serialport");
 
-var gcode = require("gcode");
-var interpreter = require("interpreter");
+var gcode = require("./gcode");
+var interpreter = require("./interpreter");
 
 main();
 
@@ -23,11 +22,6 @@ var bbox = {x: cm(10), y: cm(10), width: cm(80)-suspensionMargin, height: cm(80)
 var resolution = 0.5;
 // Stepper motor resolution (mm per one step)
 var steplength = 0.2;
-
-var port = new SerialPort("/dev/tty-usbserial1", {
-	autoOpen: false,
-	baudRate: 57600
-});
 
 // -----------------------------------------------------------------------------
 
@@ -133,21 +127,10 @@ function processGCode(err, data)
 			lines.push(l1steps + " " + l2steps + " " + (m.drawing ? "1" : "0") + "\n")
 		}		
 		
-		port.open(function (err) {
-			if (err) {
-				return console.log('Error opening port: ', err.message);
-			}
-
-			for(var idx in lines)
-			{			
-				port.write(lines[idx]);
-			}
-		});
-
-		// the open event will always be emitted
-		port.on('open', function() {
-		  // open logic
-		});	
+		for(var idx in lines)
+		{			
+			process.stdout.write(lines[idx]);
+		}
 	}
 }
 
