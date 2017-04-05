@@ -6,24 +6,32 @@ var interpreter = require("./interpreter");
 main();
 
 // -----------------------------------------------------------------------------
-// Configuration parameters
+// CONFIGURATION
 
-// distance between the two motors
+// For explanation, see configuration.png
+var a = cm(0);
+var b = cm(0);
+var c = cm(0);
 var d = m(1)-cm(6);
-
-// the distance between the edge of the world and the middle of the suspension boxes. 
-// make it cm(0) for real world, and cm(3) for the simulator
-var suspensionMargin = cm(0);
-
-// The actual drawing area. (0,0) is supposed to be the center of the shaft of the left motor
-var bbox = {x: cm(10), y: cm(10), width: cm(80)-suspensionMargin, height: cm(80)-suspensionMargin};
+var e = cm(10);
+var f = cm(10);
+var g = cm(80);
+var h = cm(80);
 
 // Split paths around this length (mm)
 var resolution = 0.5;
 // Stepper motor resolution (mm per one step)
 var steplength = 0.2;
 
+// The distance between the edge of the world and the middle of the suspension boxes. 
+// make it cm(0) for real world, and cm(3) for the simulator
+var suspensionMargin = cm(0);
+
+// /CONFIGURATION
 // -----------------------------------------------------------------------------
+
+// The actual drawing area. (0,0) is supposed to be the center of the shaft of the left motor
+var bbox = {x: e, y: f, width: g-suspensionMargin, height: h-suspensionMargin};
 
 // lengths for home position
 var il1 = length1(0,0);
@@ -51,15 +59,15 @@ function m(d)
 
 function length1(x,y)
 {
-    x += bbox.x-suspensionMargin;
-    y += bbox.y-suspensionMargin;
+    x += bbox.x-suspensionMargin-a;
+    y += bbox.y-suspensionMargin-c;
     return Math.sqrt((x*x) + (y*y));
 }
 
 function length2(x,y)
 {
-    x += bbox.x-suspensionMargin;
-    y += bbox.y-suspensionMargin;
+    x += bbox.x-suspensionMargin+b;
+    y += bbox.y-suspensionMargin-c;
     return Math.sqrt(((d-x)*(d-x)) + (y*y));
 }
 
