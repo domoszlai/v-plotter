@@ -1,30 +1,17 @@
 ## Synopsis
 
-A Box2D based hanging plotter simulator. The underlying physics engine enables to test
-the algorithms for a hanging plotter without risking a bug in the simulator engine.
-It is also a very nice way to test my SVG to GCode converter, [juicy-gcode](https://github.com/domoszlai/juicy-gcode).
+Step generator and simulator for a simple V plotter.
 
 ## Usage
 
-Open `index-gocde.html` in a web browser, copy past some gcode (or try the default one) into the textarea and push the run button.
-The plotter start to draw in a realistic way right away.
-
-Keep in mind that the drawing area of the plotter is 80cm x 80cm. Out of this area the plotter bacomes unrealistic as I used
-Box2D distance joint for the strings, because it does not offer a proper rope implementation.
-
-## Standalone version
-
-There is also a standalone version which converts GCode into motor movements and sends these directly to the serial port. 
-For this feature install the `serialport` module
-
-`npm install serialport`
-
-then type
+Type
 
 `node gensteps.js gcodefile`
 
-You probably also want to configure the sender beforehand, e.g. the resulotion of the stepper motor, serial port parameters, etc...
-The configuration parameters can be found in `genstep.js`.
+It will write the result to the standard output which can be used by the simulator, or by a real V plotter.
+
+For a real V plottter, you also want to configure the generator by editing `gensteps.js`, e.g. the resolution of the stepper motors and other stuff
+visualized by `configuration.png`.
 
 ## Limitations
 
