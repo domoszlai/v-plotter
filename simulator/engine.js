@@ -1,6 +1,10 @@
 // the distance between the edge of the world and the middle of the suspension boxes
 var suspensionMargin = cm(3);
 
+// make these (0,0) for 1 suspension point
+var carriageAnchorLeft = new Box2D.Common.Math.b2Vec2(-cm(5), -cm(5));
+var carriageAnchorRight = new Box2D.Common.Math.b2Vec2(cm(5), -cm(5));
+
 var distance_joint1;
 var distance_joint2;
 var nozzle;
@@ -45,7 +49,9 @@ function createWorld(scale,homex,homey,il1,il2)
     ground = createBox(world, m(0.5), m(1), m(1), cm(3), {type : b2Body.b2_staticBody});
     var a = createBox(world, suspensionMargin, suspensionMargin, cm(3) , cm(3), {type : b2Body.b2_staticBody});
     var b = createBox(world, m(1)-suspensionMargin, suspensionMargin, cm(3), cm(3), {type : b2Body.b2_staticBody});
-    nozzle = createBall(world, bbox.x, bbox.y, cm(3/2));
+    // angularDamping makes the carriage less shaky
+    nozzle = createBox(world, bbox.x, bbox.y, cm(10), cm(10), {angularDamping: 5});
+    //nozzle = createBall(world, bbox.x, bbox.y, cm(3/2));
      
     //create distance joint between b and c
     distance_joint1 = new b2DistanceJointDef();
@@ -53,18 +59,18 @@ function createWorld(scale,homex,homey,il1,il2)
     distance_joint1.bodyB = nozzle;
     //connect the centers - center in local coordinate - relative to body is 0,0
     distance_joint1.localAnchorA = new b2Vec2(0, 0);
-    distance_joint1.localAnchorB = new b2Vec2(0, 0);
+    distance_joint1.localAnchorB = carriageAnchorLeft;
     //length of joint
     distance_joint1.length = il1;
     distance_joint1.collideConnected = true;
-
+    
     //create distance joint between b and c
     distance_joint2 = new b2DistanceJointDef();
     distance_joint2.bodyA = b;
     distance_joint2.bodyB = nozzle;
     //connect the centers - center in local coordinate - relative to body is 0,0
     distance_joint2.localAnchorA = new b2Vec2(0, 0);
-    distance_joint2.localAnchorB = new b2Vec2(0, 0);
+    distance_joint2.localAnchorB = carriageAnchorRight;
     //length of joint
     distance_joint2.length = il2;
     distance_joint2.collideConnected = true;
@@ -72,7 +78,7 @@ function createWorld(scale,homex,homey,il1,il2)
     //add the joint to the world
     distance_joint1 = world.CreateJoint(distance_joint1);
     distance_joint2 = world.CreateJoint(distance_joint2);
-     
+    
     return world;
 }       
  
@@ -81,28 +87,23 @@ function createBall(world, x, y, radius, options)
 {
      //default setting
     options = $.extend(true, {
-        'density' : 1.0 ,
-        'friction' : 1.0 ,
-        'restitution' : 0.5 ,
-         
+        'density' : 1.0,
+        'friction' : 1.0,
+        'restitution' : 1.0,
         'type' : b2Body.b2_dynamicBody
     }, options);
      
     var body_def = new b2BodyDef();
     var fix_def = new b2FixtureDef();
      
-    fix_def.density = options.density || 1.0;
-    fix_def.friction = 0.5;
-    fix_def.restitution = 0.5;
+    fix_def.density = options.density;
+    fix_def.friction = options.friction;
+    fix_def.restitution = options.restitution;
      
     var shape = new b2CircleShape(radius);
     fix_def.shape = shape;
      
-    body_def.position.Set(x , y);
-     
-    body_def.linearDamping = 0.0;
-    body_def.angularDamping = 0.0;
-     
+    body_def.position.Set(x , y);     
     body_def.type = b2Body.b2_dynamicBody;
     body_def.userData = options.user_data;
      
@@ -117,9 +118,11 @@ function createBox(world, x, y, width, height, options)
 {
      //default setting
     options = $.extend(true, {
-        'density' : 1.0 ,
-        'friction' : 1.0 ,
-        'restitution' : 0.5 ,
+        'density' : 1.0,
+        'friction' : 1.0,
+        'restitution' : 1.0,
+        'angularDamping' : 1.0,
+        'linearDamping' : 1.0,
         'type' : b2Body.b2_dynamicBody
     }, options);
        
@@ -129,13 +132,15 @@ function createBox(world, x, y, width, height, options)
     fix_def.density = options.density;
     fix_def.friction = options.friction;
     fix_def.restitution = options.restitution;
-     
+    
     fix_def.shape = new b2PolygonShape();
          
     fix_def.shape.SetAsBox(width/2, height/2);
      
     body_def.position.Set(x , y);
-     
+    body_def.angularDamping = options.angularDamping; 
+    body_def.linearDamping = options.linearDamping;    
+    
     body_def.type = options.type;
     body_def.userData = options.user_data;
      
