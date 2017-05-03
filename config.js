@@ -10,18 +10,14 @@ var config = {
     G: cm(80),
     H: cm(80),
 
-    // box2d to canvas scale: 1 metre in box2d = 600px of canvas
-    scale: 600,
-
-    // frame per sec for the world
-    fps: 60,
-    
+    // Split paths around this length (mm)
+    resolution: 0.5,
     // Stepper motor resolution (mm per one step)
     steplength: 0.2,
 
     // The distance between the edge of the world and the middle of the suspension boxes. 
     // make it cm(0) for real world, and cm(3) for the simulator
-    suspensionMargin: cm(3),    
+    suspensionMargin: cm(0),    
     
     inch: inch,
     mm: mm,
@@ -36,15 +32,20 @@ function inch(d)
 
 function mm(d)
 {
-	return d/1000;
+	return d;
 }
 
 function cm(d)
 {
-	return d/100;
+	return d*10;
 }
 
 function m(d)
 {
-	return d;
+	return d*1000;
+}
+
+if (typeof module !== 'undefined' && module.exports) 
+{
+	exports.config = config;
 }

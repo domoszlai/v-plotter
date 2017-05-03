@@ -9371,7 +9371,7 @@
     <script type="text/javascript">
 
 // the actual drawing area in the world
-var bbox = {x: E, y: F, width: G-suspensionMargin, height: H-suspensionMargin};
+var bbox = {x: config.E, y: config.F, width: config.G-config.suspensionMargin, height: config.H-config.suspensionMargin};
     
 var movements = new Queue();
 
@@ -9385,21 +9385,21 @@ var il2 = length2(0,0);
  
 function length1(x,y)
 {
-    x += bbox.x-suspensionMargin;
-    y += bbox.y-suspensionMargin;
+    x += bbox.x-config.suspensionMargin;
+    y += bbox.y-config.suspensionMargin;
     return Math.sqrt((x*x) + (y*y));
 }
 
 function length2(x,y)
 {
-    x += bbox.x-suspensionMargin;
-    y += bbox.y-suspensionMargin;
-    return Math.sqrt(((D-x)*(D-x)) + (y*y));
+    x += bbox.x-config.suspensionMargin;
+    y += bbox.y-config.suspensionMargin;
+    return Math.sqrt(((config.D-x)*(config.D-x)) + (y*y));
 }
 
 function step() 
 {
-    var timeStep = 1.0/(fps * 0.8);
+    var timeStep = 1.0/(config.fps * 0.8);
      
     var m; 
     var sposx = nozzle.GetPosition().x;
@@ -9431,7 +9431,7 @@ function step()
     }
         
     //call this function again after 1/60 seconds or 16.7ms
-    setTimeout(step , 1000 / fps);
+    setTimeout(step , 1000 / config.fps);
 }  
 
 function parseSteps(text)
@@ -9457,7 +9457,7 @@ function runSteps()
     for(var i=0; i<steps.length; i++)
     {
 		var onestep  = steps[i];
-		movements.enqueue({l1: onestep[0]*steplength/1000, l2: onestep[1]*steplength/1000, drawing: onestep[2] != 0});
+		movements.enqueue({l1: onestep[0]*config.steplength/1000, l2: onestep[1]*config.steplength/1000, drawing: onestep[2] != 0});
 	}
 }
   
@@ -9465,15 +9465,15 @@ function runSteps()
 $(function() 
 {
     //first create the world
-    world = createWorld(scale,bbox.x,bbox.y,il1,il2);
+    world = createWorld(config.scale,bbox.x,bbox.y,il1,il2);
      
     var canvas = $('#canvas');
     ctx = canvas.get(0).getContext('2d');
 
     var drawingcanvas = $('#drawinglayer');
     drawingctx = drawingcanvas.get(0).getContext('2d');
-    drawingctx.scale(scale,scale);
-	drawingctx.lineWidth=mm(1);
+    drawingctx.scale(config.scale,config.scale);
+	drawingctx.lineWidth=config.mm(1);
 	
 	drawingctx.beginPath();
 	drawingctx.rect(bbox.x, bbox.y, bbox.width, bbox.height);

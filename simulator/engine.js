@@ -1,6 +1,6 @@
 // make these (0,0) for 1 suspension point
-var carriageAnchorLeft = new Box2D.Common.Math.b2Vec2(-cm(5), -cm(5));
-var carriageAnchorRight = new Box2D.Common.Math.b2Vec2(cm(5), -cm(5));
+var carriageAnchorLeft = new Box2D.Common.Math.b2Vec2(-config.A, -config.C);
+var carriageAnchorRight = new Box2D.Common.Math.b2Vec2(config.B, -config.C);
 
 var distance_joint1;
 var distance_joint2;
@@ -44,10 +44,10 @@ function createWorld(scale,homex,homey,il1,il2)
      
     //create some objects
     ground = createBox(world, m(0.5), m(1), m(1), cm(3), {type : b2Body.b2_staticBody});
-    var a = createBox(world, suspensionMargin, suspensionMargin, cm(3) , cm(3), {type : b2Body.b2_staticBody});
-    var b = createBox(world, m(1)-suspensionMargin, suspensionMargin, cm(3), cm(3), {type : b2Body.b2_staticBody});
+    var a = createBox(world, config.suspensionMargin, config.suspensionMargin, cm(3) , cm(3), {type : b2Body.b2_staticBody});
+    var b = createBox(world, m(1)-config.suspensionMargin, config.suspensionMargin, cm(3), cm(3), {type : b2Body.b2_staticBody});
     // angularDamping makes the carriage less shaky
-    nozzle = createBox(world, bbox.x, bbox.y, cm(10), cm(10), {angularDamping: 5});
+    nozzle = createBox(world, bbox.x, bbox.y, config.A+config.B, config.C*2, {angularDamping: 5});
     //nozzle = createBall(world, bbox.x, bbox.y, cm(3/2));
      
     //create distance joint between b and c

@@ -2,73 +2,29 @@ var fs = require('fs');
 
 var gcode = require("./gcode");
 var interpreter = require("./interpreter");
+var config = require("./config").config; 
 
 main();
 
-// -----------------------------------------------------------------------------
-// CONFIGURATION
-
-// For explanation, see configuration.png
-var a = cm(0);
-var b = cm(0);
-var c = cm(0);
-var d = m(1)-cm(6);
-var e = cm(10);
-var f = cm(10);
-var g = cm(80);
-var h = cm(80);
-
-// Split paths around this length (mm)
-var resolution = 0.5;
-// Stepper motor resolution (mm per one step)
-var steplength = 0.2;
-
-// The distance between the edge of the world and the middle of the suspension boxes. 
-// make it cm(0) for real world, and cm(3) for the simulator
-var suspensionMargin = cm(0);
-
-// /CONFIGURATION
-// -----------------------------------------------------------------------------
-
 // The actual drawing area. (0,0) is supposed to be the center of the shaft of the left motor
-var bbox = {x: e, y: f, width: g-suspensionMargin, height: h-suspensionMargin};
+var bbox = {x: config.E, y: config.F, width: config.G-config.suspensionMargin, height: config.H-config.suspensionMargin};
 
 // lengths for home position
 var il1 = length1(0,0);
 var il2 = length2(0,0);
 
-function inch(d)
-{
-	return mm(d)*2.54;
-}
-
-function mm(d)
-{
-	return d;
-}
-
-function cm(d)
-{
-	return d*10;
-}
-
-function m(d)
-{
-	return d*1000;
-}
-
 function length1(x,y)
 {
-    x += bbox.x-suspensionMargin-a;
-    y += bbox.y-suspensionMargin-c;
+    x += bbox.x-config.suspensionMargin-config.A;
+    y += bbox.y-config.suspensionMargin-config.C;
     return Math.sqrt((x*x) + (y*y));
 }
 
 function length2(x,y)
 {
-    x += bbox.x-suspensionMargin+b;
-    y += bbox.y-suspensionMargin-c;
-    return Math.sqrt(((d-x)*(d-x)) + (y*y));
+    x += bbox.x-config.suspensionMargin+config.B;
+    y += bbox.y-config.suspensionMargin-config.C;
+    return Math.sqrt(((config.D-x)*(config.D-x)) + (y*y));
 }
 
 // Coordinate transformation
@@ -82,8 +38,8 @@ function toLengths(points)
     for(var i=0; i<points.length; i++)
     {
         // Points are in mm, convert them to meter as box2d likes
-        var x = mm(points[i].x);
-        var y = mm(points[i].y);
+        var x = config.mm(points[i].x);
+        var y = config.mm(points[i].y);
 
         var l1 = length1(x,y);
         var l2 = length2(x,y);
@@ -104,16 +60,16 @@ function processGCode(err, data)
 		return process.stderr.write(err);
 	}
 	else
-	{
+	{        
 		var gcodes = gcode.parseGCode(data);
-		
-		// go home at the end
+	        
+        // go home at the end
 		gcodes.push({type: 'G0', args: {X:0,Y:0}});
 		gcodes.push({type: 'G0', args: {Z:0}});		
 		
-		var inter = new interpreter.interpreter(gcodes, resolution);
+		var inter = new interpreter.interpreter(gcodes, config.resolution);
 		var points = inter.toPoints();
-			
+	    
 		var movements = toLengths(points);
 		
 		var l1error = 0;
@@ -126,11 +82,11 @@ function processGCode(err, data)
 			var m = movements[idx];
 						
 			// Accumulate the error, and try to correct it at the next step
-			var l1steps = Math.round((m.l1+l1error)/steplength);
-			var l2steps = Math.round((m.l2+l2error)/steplength);
+			var l1steps = Math.round((m.l1+l1error)/config.steplength);
+			var l2steps = Math.round((m.l2+l2error)/config.steplength);
 							
-			l1error += m.l1 - l1steps * steplength;
-			l2error += m.l2 - l2steps * steplength;
+			l1error += m.l1 - l1steps * config.steplength;
+			l2error += m.l2 - l2steps * config.steplength;
 			
 			lines.push(l1steps + " " + l2steps + " " + (m.drawing ? "1" : "0") + "\n")
 		}		
