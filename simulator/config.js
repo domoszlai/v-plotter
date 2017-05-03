@@ -1,9 +1,9 @@
 var config = {
     
     // see: configuration.png
-    A: cm(5),
-    B: cm(5),
-    C: cm(5),
+    A: cm(0),
+    B: cm(0),
+    C: cm(0),
     D: m(1)-cm(6),
     E: cm(10),
     F: cm(10),

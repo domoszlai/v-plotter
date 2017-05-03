@@ -2032,12 +2032,16 @@ M2
     <script type="text/javascript" src="Queue.js"></script>
     <script type="text/javascript" src="../gcode.js"></script>
     <script type="text/javascript" src="../interpreter.js"></script>
+    <script type="text/javascript" src="../transformation.js"></script>
     <script type="text/javascript" src="config.js"></script>
     <script type="text/javascript" src="engine.js"></script>
     <script type="text/javascript">
 
 // the actual drawing area in the world
 var bbox = {x: config.E, y: config.F, width: config.G-config.suspensionMargin, height: config.H-config.suspensionMargin};
+
+// create a closure for coordinate transformation
+var trans = transformation(config);
     
 var movements = new Queue();
 
@@ -2046,23 +2050,10 @@ var ctx;
 var drawingctx;
 
 // lengths for home position
-var il1 = length1(0,0);
-var il2 = length2(0,0);
+var ils = trans.calcLengths(0,0);
+var il1 = ils.lLeft;
+var il2 = ils.lRight;
  
-function length1(x,y)
-{
-    x += bbox.x-config.suspensionMargin;
-    y += bbox.y-config.suspensionMargin;
-    return Math.sqrt((x*x) + (y*y));
-}
-
-function length2(x,y)
-{
-    x += bbox.x-config.suspensionMargin;
-    y += bbox.y-config.suspensionMargin;
-    return Math.sqrt(((config.D-x)*(config.D-x)) + (y*y));
-}
-
 // Coordinate transformation
 function toLengths(points)
 {
@@ -2077,8 +2068,9 @@ function toLengths(points)
         var x = config.mm(points[i].x);
         var y = config.mm(points[i].y);
 
-        var l1 = length1(x,y);
-        var l2 = length2(x,y);
+        var lengths = trans.calcLengths(x, y);
+        var l1 = lengths.lLeft;
+        var l2 = lengths.lRight;
         
         movements.enqueue({l1: l1-cl1, l2: l2-cl2, drawing: points[i].drawing});
         

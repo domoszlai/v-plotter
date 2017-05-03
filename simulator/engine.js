@@ -46,10 +46,17 @@ function createWorld(scale,homex,homey,il1,il2)
     ground = createBox(world, m(0.5), m(1), m(1), cm(3), {type : b2Body.b2_staticBody});
     var a = createBox(world, config.suspensionMargin, config.suspensionMargin, cm(3) , cm(3), {type : b2Body.b2_staticBody});
     var b = createBox(world, m(1)-config.suspensionMargin, config.suspensionMargin, cm(3), cm(3), {type : b2Body.b2_staticBody});
-    // angularDamping makes the carriage less shaky
-    nozzle = createBox(world, bbox.x, bbox.y, config.A+config.B, config.C*2, {angularDamping: 5});
-    //nozzle = createBall(world, bbox.x, bbox.y, cm(3/2));
-     
+    
+    if(config.A > 0 || config.B > 0)
+    {
+        // angularDamping makes the carriage less shaky
+        nozzle = createBox(world, bbox.x, bbox.y, config.A+config.B, config.C*2, {angularDamping: 10});
+    }
+    else
+    {
+        nozzle = createBall(world, bbox.x, bbox.y, cm(3/2));
+    }
+    
     //create distance joint between b and c
     distance_joint1 = new b2DistanceJointDef();
     distance_joint1.bodyA = a;
