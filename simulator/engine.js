@@ -1,6 +1,3 @@
-// the distance between the edge of the world and the middle of the suspension boxes
-var suspensionMargin = cm(3);
-
 // make these (0,0) for 1 suspension point
 var carriageAnchorLeft = new Box2D.Common.Math.b2Vec2(-cm(5), -cm(5));
 var carriageAnchorRight = new Box2D.Common.Math.b2Vec2(cm(5), -cm(5));
@@ -150,24 +147,5 @@ function createBox(world, x, y, width, height, options)
     return b;
 }
 
-function inch(d)
-{
-	return mm(d)*2.54;
-}
-
-function mm(d)
-{
-	return d/1000;
-}
-
-function cm(d)
-{
-	return d/100;
-}
-
-function m(d)
-{
-	return d;
-}
 
  

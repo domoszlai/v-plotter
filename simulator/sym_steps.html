@@ -9366,29 +9366,18 @@
     <script type="text/javascript" src="Queue.js"></script>
     <script type="text/javascript" src="../gcode.js"></script>
     <script type="text/javascript" src="../interpreter.js"></script>
+    <script type="text/javascript" src="config.js"></script>
     <script type="text/javascript" src="engine.js"></script>
     <script type="text/javascript">
 
+// the actual drawing area in the world
+var bbox = {x: E, y: F, width: G-suspensionMargin, height: H-suspensionMargin};
+    
 var movements = new Queue();
 
 var world;
 var ctx;
 var drawingctx;
-
-// box2d to canvas scale: 1 metre in box2d = 600px of canvas
-var scale = 600;
-
-// frame per sec for the world
-var fps = 60;
-
-// distance between the two motors
-d = m(1)-cm(6);
-
-// Stepper motor resolution (mm per one step)
-var steplength = 0.2;
-
-// the actual drawing area in the world
-var bbox = {x: cm(10), y: cm(10), width: cm(80)-suspensionMargin, height: cm(80)-suspensionMargin};
 
 // lengths for home position
 var il1 = length1(0,0);
@@ -9405,7 +9394,7 @@ function length2(x,y)
 {
     x += bbox.x-suspensionMargin;
     y += bbox.y-suspensionMargin;
-    return Math.sqrt(((d-x)*(d-x)) + (y*y));
+    return Math.sqrt(((D-x)*(D-x)) + (y*y));
 }
 
 function step() 
