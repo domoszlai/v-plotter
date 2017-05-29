@@ -43,14 +43,14 @@ function createWorld(scale,homex,homey,il1,il2)
     world.SetDebugDraw(debugDraw);
      
     //create some objects
-    ground = createBox(world, m(0.5), m(1), m(1), cm(3), {type : b2Body.b2_staticBody});
-    var a = createBox(world, config.suspensionMargin, config.suspensionMargin, cm(3) , cm(3), {type : b2Body.b2_staticBody});
-    var b = createBox(world, m(1)-config.suspensionMargin, config.suspensionMargin, cm(3), cm(3), {type : b2Body.b2_staticBody});
+    ground = createBox(world, m(0.5), config.suspensionMargin+config.F+config.H+cm(5), config.suspensionMargin*2+config.D+2*3, cm(3), {type : b2Body.b2_staticBody});
+    var a = createBox(world, config.suspensionMargin, config.suspensionMargin, cm(3), cm(3), {type : b2Body.b2_staticBody});
+    var b = createBox(world, config.suspensionMargin + config.D, config.suspensionMargin, cm(3), cm(3), {type : b2Body.b2_staticBody});
     
     if(config.A > 0 || config.B > 0)
     {
         // angularDamping makes the carriage less shaky
-        nozzle = createBox(world, bbox.x, bbox.y, config.A+config.B, config.C*2, {angularDamping: 10});
+        nozzle = createBox(world, config.suspensionMargin + bbox.x, config.suspensionMargin + bbox.y, config.A+config.B, config.C*2, {angularDamping: 10});
     }
     else
     {

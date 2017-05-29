@@ -1,10 +1,10 @@
 var config = {
     
     // see: configuration.png
-    A: cm(0),
-    B: cm(0),
-    C: cm(0),
-    D: m(1)-cm(6),
+    A: cm(5),
+    B: cm(5),
+    C: cm(5),
+    D: cm(100),
     E: cm(10),
     F: cm(10),
     G: cm(80),

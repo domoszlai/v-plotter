@@ -2038,7 +2038,7 @@ M2
     <script type="text/javascript">
 
 // the actual drawing area in the world
-var bbox = {x: config.E, y: config.F, width: config.G-config.suspensionMargin, height: config.H-config.suspensionMargin};
+var bbox = {x: config.E, y: config.F, width: config.G, height: config.H};
 
 // create a closure for coordinate transformation
 var trans = transformation(config);
@@ -2050,9 +2050,11 @@ var ctx;
 var drawingctx;
 
 // lengths for home position
-var ils = trans.calcLengths(0,0);
-var il1 = ils.lLeft;
-var il2 = ils.lRight;
+    var ils = trans.calcLengths(0.001,0);
+    var il1 = ils.lLeft;
+    var il2 = ils.lRight;
+//var il1;
+//var il2;
  
 // Coordinate transformation
 function toLengths(points)
@@ -2145,10 +2147,20 @@ $(function()
 	drawingctx.lineWidth=config.mm(1);
 	
 	drawingctx.beginPath();
-	drawingctx.rect(bbox.x, bbox.y, bbox.width, bbox.height);
+	drawingctx.rect(config.suspensionMargin + bbox.x, config.suspensionMargin + bbox.y, bbox.width, bbox.height);
 	drawingctx.strokeStyle = "black";
 	drawingctx.stroke();  	
-	          
+
+    var ils = trans.calcLengths(0.001,0);
+    
+    drawingctx.beginPath();
+    drawingctx.moveTo(ils.p1.x+config.suspensionMargin, ils.p1.y+config.suspensionMargin);
+    drawingctx.lineTo(ils.p2.x+config.suspensionMargin, ils.p2.y+config.suspensionMargin);
+    drawingctx.strokeStyle = "black"; 
+    drawingctx.stroke(); 
+    
+    
+    
     //start stepping
     step();
 });
