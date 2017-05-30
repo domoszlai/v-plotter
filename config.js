@@ -4,7 +4,7 @@ var config = {
     A: cm(5),
     B: cm(5),
     C: cm(5),
-    D: m(1)-cm(6),
+    D: cm(100),
     E: cm(10),
     F: cm(10),
     G: cm(80),

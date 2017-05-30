@@ -3,6 +3,7 @@ var fs = require('fs');
 var gcode = require("./gcode");
 var interpreter = require("./interpreter");
 var config = require("./config").config; 
+var trans = require("./transformation").transformation(config);
 
 main();
 
@@ -10,8 +11,9 @@ main();
 var bbox = {x: config.E, y: config.F, width: config.G-config.suspensionMargin, height: config.H-config.suspensionMargin};
 
 // lengths for home position
-var il1 = length1(0,0);
-var il2 = length2(0,0);
+var ils = trans.calcLengths(0,0);
+var il1 = ils.lLeft;
+var il2 = ils.lRight;
 
 function length1(x,y)
 {
@@ -41,8 +43,9 @@ function toLengths(points)
         var x = config.mm(points[i].x);
         var y = config.mm(points[i].y);
 
-        var l1 = length1(x,y);
-        var l2 = length2(x,y);
+        var lengths = trans.calcLengths(x, y);
+        var l1 = lengths.lLeft;
+        var l2 = lengths.lRight;
         
         movements.push({l1: l1-cl1, l2: l2-cl2, drawing: points[i].drawing});
         
