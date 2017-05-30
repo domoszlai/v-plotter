@@ -14,10 +14,6 @@ var config = {
     resolution: 0.5,
     // Stepper motor resolution (mm per one step)
     steplength: 0.2,
-
-    // The distance between the edge of the world and the middle of the suspension boxes. 
-    // make it cm(0) for real world, and cm(3) for the simulator
-    suspensionMargin: cm(0),    
     
     inch: inch,
     mm: mm,
