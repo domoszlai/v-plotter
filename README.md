@@ -1,6 +1,6 @@
 ## Synopsis
 
-Step generator and simulator for a simple V plotter. The math is explained is at [http://dlacko.blogspot.com/2017/06/v-plotter-math-coordinate-transformation-rotation-compensation.html].
+Step generator and simulator for a simple V plotter. The math is explained at [http://dlacko.blogspot.com/2017/06/v-plotter-math-coordinate-transformation-rotation-compensation.html].
 
 ## Usage
 
