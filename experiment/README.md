@@ -1,6 +1,7 @@
-Prototype implementation for the algorithm "V-plotter coordinate transformation with rotation compensation". See
-[http://dlacko.blogspot.com/2017/06/v-plotter-math-coordinate-transformation-rotation-compensation.html].
+## Experiments for the step generation algorithm
 
+* Rotation: rotation compensation
+* Sprocket: non-zero sprocket size compensation
 
 
 
