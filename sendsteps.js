@@ -1,5 +1,5 @@
 var fs = require('fs');
-var LineReader = require('linereader');
+var lineByLine = require('n-readlines');
 
 var SerialPort = require('serialport');
 var Delimiter = SerialPort.parsers.Delimiter;
@@ -68,18 +68,33 @@ function detect()
     });
 }
 
-var lastId = 0;
+var lineNumber = 0;
 
-function test(port)
+function sendFile(liner, port)
 {
     function sendSteps(nrSteps) {
         for(var i=0; i<nrSteps; i++)
         {
-            lastId++;
-            port.write(cobs.encode(new Buffer([lastId, lastId, lastId])));
-            port.write(new Buffer([0x00]));
+            var line = liner.next();
+            if(line)
+            {
+                lineNumber++;                
+                console.log('Line ' + lineNumber + ': ' + line.toString('ascii'));
             
-            console.log('Send: ', new Buffer([lastId, lastId, lastId]));
+                var parts = line.toString().split(" ");
+                var left_motor_steps = parseInt(parts[0]);
+                var right_motor_steps = parseInt(parts[1]);
+                var pen_on = parseInt(parts[2]);
+            
+                port.write(cobs.encode(new Buffer([left_motor_steps, right_motor_steps, pen_on])));
+                port.write(new Buffer([0x00]));
+            
+                console.log('Send: ', new Buffer([left_motor_steps, right_motor_steps, pen_on]));
+            }
+            else
+            {
+                return console.log('Info: ', 'Step file has bben sent to the client');
+            }
         }
     }
 
@@ -93,13 +108,15 @@ function test(port)
 
 function main(stepfile, portname, baudrate)
 {    
-    fs.readFile(stepfile, 'utf8', function(err, data){    
+    fs.open(stepfile, 'r', (err, fd) => {
         if (err) 
         {
             return console.log('Error: ', err.message);
         }
         else
-        { 
+        {
+            var liner = new lineByLine(fd);
+
             var port = new SerialPort(portname, {
                     baudRate: baudrate,
                     autoOpen: false 
@@ -110,9 +127,9 @@ function main(stepfile, portname, baudrate)
                     return console.log('Error: ', err.message);
                   }
     
-                  test(port);  
-                  //port.write(Cobs.encode(new Buffer([0x11,0x22,0x00,0x33])));                  
+                  sendFile(liner, port);  
             });            
+            
         }
     });
 }

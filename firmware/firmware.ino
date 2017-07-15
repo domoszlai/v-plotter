@@ -5,8 +5,8 @@
 
 struct cmd
 {
-  uint8_t left_motor;
-  uint8_t right_motor;
+  int8_t left_motor_steps;
+  int8_t right_motor_steps;
   uint8_t pen_on;
 };
 
@@ -73,8 +73,8 @@ void addCmd(uint8_t* buffer, size_t size)
 {
   noInterrupts();
 
-  cmd_queue[queue_ptr].left_motor = buffer[0];
-  cmd_queue[queue_ptr].right_motor = buffer[1];
+  cmd_queue[queue_ptr].left_motor_steps = buffer[0];
+  cmd_queue[queue_ptr].right_motor_steps = buffer[1];
   cmd_queue[queue_ptr].pen_on = buffer[2];
 
   queue_ptr = queue_ptr++ % QUEUE_SIZE;
