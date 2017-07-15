@@ -1,11 +1,54 @@
 var fs = require('fs');
+var argv = require("argv");
 
 var gcode = require("./gcode");
 var interpreter = require("./interpreter");
 var config = require("./config").config; 
 var trans = require("./transformation").transformation(config);
 
-main();
+var args = argv.option([
+    {
+        name: 'speed',
+        short: 's',
+        type: 'int'
+    },
+    {
+        name: 'help',
+        short: 'h',
+        type: 'boolean'
+    }        
+]).run();
+
+if(args.targets.length == 1 && !args.options.help)
+{
+    fs.readFile(args.targets[0], 'utf8', function(err, data){
+        if (err) 
+        {
+            return Console.log('Error: ', err.message);;
+        }
+        else
+        {        
+            var maxspeed = args.options.speed;
+            if(!maxspeed || maxspeed < 1 || maxspeed > 100) maxspeed = 40;
+                
+            processGCode(data, maxspeed);
+        };
+       
+    });;
+}
+else
+{
+   console.info('Usage: gensteps.js <gcodefile> [options] \n\
+\n\
+        --help, -h \n\
+                Displays help information about this script \n\
+\n\
+        --speed speed, -s speed\n\
+                 Maximum speed in 1/10 mm/sec. Valid between 1 and 100, default is 40. \n\
+                 ');
+}
+
+// ----------------------------------------------------------------------------
 
 // The actual drawing area. (0,0) is supposed to be the center of the shaft of the left motor
 var bbox = {x: config.E, y: config.F, width: config.G-config.suspensionMargin, height: config.H-config.suspensionMargin};
@@ -56,62 +99,44 @@ function toLengths(points)
 	return movements;
 }
 
-function processGCode(err, data)
+function processGCode(data, maxspeed)
 {
-	if (err) 
-	{
-		return process.stderr.write(err);
-	}
-	else
-	{        
-		var gcodes = gcode.parseGCode(data);
-	        
-        // go home at the end
-		gcodes.push({type: 'G0', args: {X:0,Y:0}});
-		gcodes.push({type: 'G0', args: {Z:0}});		
-		
-		var inter = new interpreter.interpreter(gcodes, config.resolution);
-		var points = inter.toPoints();
-	    
-		var movements = toLengths(points);
-		
-		var l1error = 0;
-		var l2error = 0;
-		
-		var lines = [];
-		
-		for (var idx in movements)
-		{
-			var m = movements[idx];
-						
-			// Accumulate the error, and try to correct it at the next step
-			var l1steps = Math.round((m.l1+l1error)/config.steplength);
-			var l2steps = Math.round((m.l2+l2error)/config.steplength);
-							
-			l1error += m.l1 - l1steps * config.steplength;
-			l2error += m.l2 - l2steps * config.steplength;
-			
-			lines.push(l1steps + " " + l2steps + " " + (m.drawing ? "1" : "0") + "\n")
-		}		
-		
-		for(var idx in lines)
-		{			
-			process.stdout.write(lines[idx]);
-		}
-	}
+    var gcodes = gcode.parseGCode(data);
+        
+    // go home at the end
+    gcodes.push({type: 'G0', args: {X:0,Y:0}});
+    gcodes.push({type: 'G0', args: {Z:0}});		
+    
+    var inter = new interpreter.interpreter(gcodes, config.resolution);
+    var points = inter.toPoints();
+    
+    var movements = toLengths(points);
+    
+    var l1error = 0;
+    var l2error = 0;
+    
+    var lines = [];
+    
+    for (var idx in movements)
+    {
+        var m = movements[idx];
+                    
+        // Accumulate the error, and try to correct it at the next step
+        var l1steps = Math.round((m.l1+l1error)/config.steplength);
+        var l2steps = Math.round((m.l2+l2error)/config.steplength);
+                        
+        l1error += m.l1 - l1steps * config.steplength;
+        l2error += m.l2 - l2steps * config.steplength;
+        
+        lines.push(l1steps + " " + l2steps + " " + (m.drawing ? "1" : "0") + " " + maxspeed + "\n")
+    }		
+    
+    for(var idx in lines)
+    {			
+        process.stdout.write(lines[idx]);
+    }
 }
 
-function main()
-{
-	if(process.argv.length == 3)
-	{
-		fs.readFile(process.argv[2], 'utf8', processGCode);
-	}
-	else
-	{
-		process.stdout.write("Usage: " + process.argv[0] + " " + process.argv[1] + " gcodefile");	
-	}
-}
 
 
 

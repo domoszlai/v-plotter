@@ -72,7 +72,8 @@ var lineNumber = 0;
 
 function sendFile(liner, port)
 {
-    function sendSteps(nrSteps) {
+    function sendSteps(nrSteps) 
+    {
         for(var i=0; i<nrSteps; i++)
         {
             var line = liner.next();
@@ -85,11 +86,17 @@ function sendFile(liner, port)
                 var left_motor_steps = parseInt(parts[0]);
                 var right_motor_steps = parseInt(parts[1]);
                 var pen_on = parseInt(parts[2]);
+                var speed = parseInt(parts[3]);
             
-                port.write(cobs.encode(new Buffer([left_motor_steps, right_motor_steps, pen_on])));
+                var flags = speed & 0xff;
+                if(flags < 0 || flags > 100) flags = 40; // ensure limits
+                flags = flags << 1;
+                flags = flags | (pen_on & 0x01);
+            
+                port.write(cobs.encode(new Buffer([left_motor_steps, right_motor_steps, flags])));
                 port.write(new Buffer([0x00]));
             
-                console.log('Send: ', new Buffer([left_motor_steps, right_motor_steps, pen_on]));
+                console.log('Send: ', new Buffer([left_motor_steps, right_motor_steps, pen_on, speed, flags]));
             }
             else
             {

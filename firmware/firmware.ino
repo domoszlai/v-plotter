@@ -1,17 +1,31 @@
-#include "PacketSerial.h"
+// https://github.com/bakercp/PacketSerial
+#include <PacketSerial.h>
+// https://github.com/PaulStoffregen/TimerOne
+#include <TimerOne.h> 
 
 // The size of the queue in number of commands
 #define QUEUE_SIZE  1000
 
-struct cmd
+// Command structure
+union Flags
+{
+  struct
+  {
+    uint8_t speed : 7;  // * 0.1 mm / sec
+    uint8_t pen_on : 1;
+  };
+  uint8_t whole;  
+};
+
+struct Command
 {
   int8_t left_motor_steps;
   int8_t right_motor_steps;
-  uint8_t pen_on;
+  union Flags flags;
 };
 
 // It is going to be a circular buffer
-struct cmd cmd_queue[QUEUE_SIZE];
+struct Command cmd_queue[QUEUE_SIZE];
 // Pointer to the next free slot
 int queue_ptr = 0;
 // The number of elements (steps) in the queue
@@ -20,6 +34,7 @@ int nr_cmds = 0;
 // For communicating using COBS
 PacketSerial serial;
 
+// The number of commands requested and still pending
 uint8_t cmdsRequested;
 
 void requestCmds()
@@ -41,12 +56,21 @@ void requestCmds()
 
 void setup()
 {
+  // Set up step timer
+  Timer1.initialize(150000);  // 0.15 sec
+  Timer1.attachInterrupt(step);
+  
   // We must specify a packet handler method so that
   serial.setPacketHandler(&onPacket);
   serial.begin(115200);
 
   // Ask for commands
   requestCmds();
+}
+
+// Step interrupt
+void step(void)
+{
 }
 
 void loop()
@@ -75,7 +99,7 @@ void addCmd(uint8_t* buffer, size_t size)
 
   cmd_queue[queue_ptr].left_motor_steps = buffer[0];
   cmd_queue[queue_ptr].right_motor_steps = buffer[1];
-  cmd_queue[queue_ptr].pen_on = buffer[2];
+  cmd_queue[queue_ptr].flags.whole = buffer[2];
 
   queue_ptr = queue_ptr++ % QUEUE_SIZE;
   nr_cmds++;
