@@ -39,34 +39,17 @@ struct Command
 // It is going to be a circular buffer
 struct Command cmd_queue[QUEUE_SIZE];
 // Pointer to the next free slot
-int queue_write_ptr = 0;
+volatile int queue_write_ptr = 0;
 // Pointer to the first element to consume
-int queue_read_ptr = 0;
+volatile int queue_read_ptr = 0;
 // The number of elements (steps) in the queue
-int nr_cmds = 0;
+volatile int nr_cmds = 0;
 
 // For communicating using COBS
 PacketSerial serial;
 
 // The number of commands requested and still pending
 uint8_t cmdsRequested;
-
-void requestCmds()
-{
-  uint8_t tmp[1]; 
-
-  if(QUEUE_SIZE - nr_cmds > 255)
-  {
-    tmp[0] = 255;
-  }
-  else
-  {
-    tmp[0] = QUEUE_SIZE - nr_cmds;
-  }
-
-  cmdsRequested = tmp[0];  
-  if(cmdsRequested>0) serial.send(tmp, 1);
-}
 
 unsigned long calcStepPeriod(uint8_t speed)
 {
@@ -82,9 +65,6 @@ void setup()
   // We must specify a packet handler method so that
   serial.setPacketHandler(&onPacket);
   serial.begin(115200);
-
-  // Ask for commands
-  requestCmds();
 }
 
 // Step interrupt
@@ -94,6 +74,23 @@ void step(void)
 
 void loop()
 {
+  if(cmdsRequested == 0 && nr_cmds < QUEUE_SIZE)
+  {
+    uint8_t tmp[1]; 
+  
+    if(QUEUE_SIZE - nr_cmds > 255)
+    {
+      tmp[0] = 255;
+    }
+    else
+    {
+      tmp[0] = QUEUE_SIZE - nr_cmds;
+    }
+  
+    cmdsRequested = tmp[0];  
+    if(cmdsRequested>0) serial.send(tmp, 1);
+  }
+  
   // The update() method should be called at the end of the loop().
   serial.update(); 
 }
@@ -102,20 +99,9 @@ void loop()
 // The buffer is delivered already decoded.
 void onPacket(const uint8_t* buffer, size_t size)
 {
-  // Make a temporary buffer.
-  uint8_t tmp[size]; 
+  // TODO: check if there is enough space left in the queue
   
-  // Copy the packet into our temporary buffer.
-  memcpy(tmp, buffer, size); 
-  
-  addCmd(tmp, size);
-}
-
-// Add the step to the queue and request more steps if this was the last expected one.
-void addCmd(uint8_t* buffer, size_t size)
-{
-  noInterrupts();
-
+  // Add the received command to the queue
   switch(buffer[0])
   {
     // set speed
@@ -137,13 +123,11 @@ void addCmd(uint8_t* buffer, size_t size)
   }
 
   queue_write_ptr = queue_write_ptr++ % QUEUE_SIZE;
+
+  // This is the only shared variable. Interrupt uses queue_read_ptr, other code uses queue_write_ptr 
+  noInterrupts(); 
   nr_cmds++;
-
-  if(--cmdsRequested == 0)
-  {
-    requestCmds();      
-  }
-
   interrupts();
 }
+
 
