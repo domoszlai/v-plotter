@@ -7,21 +7,31 @@
 #define QUEUE_SIZE  1000
 
 // Command structure
-union Flags
+struct SetSpeedCmd
 {
-  struct
-  {
-    uint8_t speed : 7;  // * 0.1 mm / sec
-    uint8_t pen_on : 1;
-  };
-  uint8_t whole;  
+  uint8_t speed;  
+};
+
+struct SelectToolCmd
+{
+  uint8_t tool;  
+};
+
+struct MoveCmd
+{
+  uint8_t left_motor_steps;  
+  uint8_t right_motor_steps;
 };
 
 struct Command
 {
-  int8_t left_motor_steps;
-  int8_t right_motor_steps;
-  union Flags flags;
+  uint8_t type;
+  union 
+  {
+    struct SetSpeedCmd setSpeedCmd;
+    struct SelectToolCmd selectToolCmd;
+    struct MoveCmd moveCmd;
+  };  
 };
 
 // It is going to be a circular buffer
@@ -97,9 +107,25 @@ void addCmd(uint8_t* buffer, size_t size)
 {
   noInterrupts();
 
-  cmd_queue[queue_ptr].left_motor_steps = buffer[0];
-  cmd_queue[queue_ptr].right_motor_steps = buffer[1];
-  cmd_queue[queue_ptr].flags.whole = buffer[2];
+  switch(buffer[0])
+  {
+    // set speed
+    case 1:
+      cmd_queue[queue_ptr].type = 1;
+      cmd_queue[queue_ptr].setSpeedCmd.speed = buffer[1];
+      break;
+    // select tool
+    case 2:
+      cmd_queue[queue_ptr].type = 2;
+      cmd_queue[queue_ptr].selectToolCmd.tool = buffer[1];
+      break;
+    // move
+    case 3:
+      cmd_queue[queue_ptr].type = 3;
+      cmd_queue[queue_ptr].moveCmd.left_motor_steps = buffer[1];
+      cmd_queue[queue_ptr].moveCmd.right_motor_steps = buffer[2];
+      break;
+  }
 
   queue_ptr = queue_ptr++ % QUEUE_SIZE;
   nr_cmds++;
