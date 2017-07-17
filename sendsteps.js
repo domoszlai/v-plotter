@@ -83,20 +83,32 @@ function sendFile(liner, port)
                 console.log('Line ' + lineNumber + ': ' + line.toString('ascii'));
             
                 var parts = line.toString().split(" ");
-                var left_motor_steps = parseInt(parts[0]);
-                var right_motor_steps = parseInt(parts[1]);
-                var pen_on = parseInt(parts[2]);
-                var speed = parseInt(parts[3]);
             
-                var flags = speed & 0xff;
-                if(flags < 0 || flags > 100) flags = 40; // ensure limits
-                flags = flags << 1;
-                flags = flags | (pen_on & 0x01);
-            
-                port.write(cobs.encode(new Buffer([left_motor_steps, right_motor_steps, flags])));
+                var cmd = parseInt(parts[0]);
+                var arr = [cmd];
+                switch(cmd)
+                {
+                    // set speed
+                    case '1':
+                        var speed = parseInt(parts[1]);
+                        if(speed < 0 || ])); > 100) speed = 5; // ensure limits
+                        arr.push(speed);
+                        break;
+                    // set tool
+                    case '2':
+                        arr.push(parseInt(parts[1]));
+                        break;
+                    // move
+                    case '3':
+                        arr.push(parseInt(parts[1]));
+                        arr.push(parseInt(parts[2]));
+                        break;
+                }
+                            
+                port.write(cobs.encode(new Buffer(arr)));
                 port.write(new Buffer([0x00]));
             
-                console.log('Send: ', new Buffer([left_motor_steps, right_motor_steps, pen_on, speed, flags]));
+                console.log('Send: ', new Buffer(arr));
             }
             else
             {

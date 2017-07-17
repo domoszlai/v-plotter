@@ -29,7 +29,7 @@ if(args.targets.length == 1 && !args.options.help)
         else
         {        
             var maxspeed = args.options.speed;
-            if(!maxspeed || maxspeed < 1 || maxspeed > 100) maxspeed = 40;
+            if(!maxspeed || maxspeed < 1 || maxspeed > 100) maxspeed = 5;
                 
             processGCode(data, maxspeed);
         };
@@ -44,7 +44,7 @@ else
                 Displays help information about this script \n\
 \n\
         --speed speed, -s speed\n\
-                 Maximum speed in 1/10 mm/sec. Valid between 1 and 100, default is 40. \n\
+                 Maximum speed in mm/sec. Valid between 1 and 100, default is 5. \n\
                  ');
 }
 
@@ -117,6 +117,11 @@ function processGCode(data, maxspeed)
     
     var lines = [];
     
+    var drawing = false;
+    
+    lines.push("1 " + maxspeed + "\n");
+    lines.push("2 0\n"); // pen off
+    
     for (var idx in movements)
     {
         var m = movements[idx];
@@ -128,7 +133,13 @@ function processGCode(data, maxspeed)
         l1error += m.l1 - l1steps * config.steplength;
         l2error += m.l2 - l2steps * config.steplength;
         
-        lines.push(l1steps + " " + l2steps + " " + (m.drawing ? "1" : "0") + " " + maxspeed + "\n")
+        if(m.drawing != drawing)
+        {
+            lines.push("2 " + (m.drawing ? "1" : "0") + "\n");
+            drawing = m.drawing;
+        }
+        
+        lines.push("3 " + l1steps + " " + l2steps + "\n");
     }		
     
     for(var idx in lines)
