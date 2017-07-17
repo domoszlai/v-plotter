@@ -39,7 +39,9 @@ struct Command
 // It is going to be a circular buffer
 struct Command cmd_queue[QUEUE_SIZE];
 // Pointer to the next free slot
-int queue_ptr = 0;
+int queue_write_ptr = 0;
+// Pointer to the first element to consume
+int queue_read_ptr = 0;
 // The number of elements (steps) in the queue
 int nr_cmds = 0;
 
@@ -118,23 +120,23 @@ void addCmd(uint8_t* buffer, size_t size)
   {
     // set speed
     case 1:
-      cmd_queue[queue_ptr].type = 1;
-      cmd_queue[queue_ptr].setSpeedCmd.speed = buffer[1];
+      cmd_queue[queue_write_ptr].type = 1;
+      cmd_queue[queue_write_ptr].setSpeedCmd.speed = buffer[1];
       break;
     // select tool
     case 2:
-      cmd_queue[queue_ptr].type = 2;
-      cmd_queue[queue_ptr].selectToolCmd.tool = buffer[1];
+      cmd_queue[queue_write_ptr].type = 2;
+      cmd_queue[queue_write_ptr].selectToolCmd.tool = buffer[1];
       break;
     // move
     case 3:
-      cmd_queue[queue_ptr].type = 3;
-      cmd_queue[queue_ptr].moveCmd.left_motor_steps = buffer[1];
-      cmd_queue[queue_ptr].moveCmd.right_motor_steps = buffer[2];
+      cmd_queue[queue_write_ptr].type = 3;
+      cmd_queue[queue_write_ptr].moveCmd.left_motor_steps = buffer[1];
+      cmd_queue[queue_write_ptr].moveCmd.right_motor_steps = buffer[2];
       break;
   }
 
-  queue_ptr = queue_ptr++ % QUEUE_SIZE;
+  queue_write_ptr = queue_write_ptr++ % QUEUE_SIZE;
   nr_cmds++;
 
   if(--cmdsRequested == 0)
