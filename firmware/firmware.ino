@@ -3,6 +3,8 @@
 // https://github.com/PaulStoffregen/TimerOne
 #include <TimerOne.h> 
 
+#include "config.h"
+
 // The size of the queue in number of commands
 #define QUEUE_SIZE  1000
 
@@ -64,10 +66,15 @@ void requestCmds()
   if(cmdsRequested>0) serial.send(tmp, 1);
 }
 
+unsigned long calcStepPeriod(uint8_t speed)
+{
+  return (unsigned long)((1.0/STEPS_PER_MM)*1000000);
+}
+
 void setup()
 {
   // Set up step timer
-  Timer1.initialize(150000);  // 0.15 sec
+  Timer1.initialize(calcStepPeriod(5)); // default: 5 mm/sec
   Timer1.attachInterrupt(step);
   
   // We must specify a packet handler method so that
