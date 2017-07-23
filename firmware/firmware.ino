@@ -97,7 +97,9 @@ void loop()
 // The buffer is delivered already decoded.
 void onPacket(const uint8_t* buffer, size_t size)
 {
-  // TODO: check if there is enough space left in the queue
+  // It should not happen, but if the client sends commands too fast, skip what cannot be stored
+  if(nr_cmds >= QUEUE_SIZE)
+    return;
   
   // Add the received command to the queue
   switch(buffer[0])
