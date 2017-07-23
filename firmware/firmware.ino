@@ -2,39 +2,16 @@
 #include <PacketSerial.h>
 // https://github.com/PaulStoffregen/TimerOne
 #include <TimerOne.h> 
+#include <Servo.h> 
 
 #include "config.h"
+#include "command.h"
+
+// For communicating using COBS
+PacketSerial serial;
 
 // The size of the queue in number of commands
 #define QUEUE_SIZE  1000
-
-// Command structure
-struct SetSpeedCmd
-{
-  uint8_t speed;  
-};
-
-struct SelectToolCmd
-{
-  uint8_t tool;  
-};
-
-struct MoveCmd
-{
-  uint8_t left_motor_steps;  
-  uint8_t right_motor_steps;
-};
-
-struct Command
-{
-  uint8_t type;
-  union 
-  {
-    struct SetSpeedCmd setSpeedCmd;
-    struct SelectToolCmd selectToolCmd;
-    struct MoveCmd moveCmd;
-  };  
-};
 
 // It is going to be a circular buffer
 struct Command cmd_queue[QUEUE_SIZE];
@@ -45,11 +22,10 @@ volatile int queue_read_ptr = 0;
 // The number of elements (steps) in the queue
 volatile int nr_cmds = 0;
 
-// For communicating using COBS
-PacketSerial serial;
-
 // The number of commands requested and still pending
 uint8_t cmdsRequested = 0;
+
+Servo pen_servo;
 
 unsigned long calcStepPeriod(uint8_t speed)
 {
@@ -58,6 +34,23 @@ unsigned long calcStepPeriod(uint8_t speed)
 
 void setup()
 {
+  // Initialize pen
+  pen_servo.attach(PEN_PIN);   
+  pen_servo.write(PEN_OFF_ANGLE);  
+  delay(PEN_CHANGE_TIME);
+
+  // Initialize stepper motors
+  pinMode(LEFT_STEP_PIN,    OUTPUT);
+  pinMode(LEFT_DIR_PIN,     OUTPUT);
+  pinMode(LEFT_ENABLE_PIN,  OUTPUT); 
+
+  pinMode(RIGHT_STEP_PIN,    OUTPUT);
+  pinMode(RIGHT_DIR_PIN,     OUTPUT);
+  pinMode(RIGHT_ENABLE_PIN,  OUTPUT); 
+
+  digitalWrite(LEFT_ENABLE_PIN, HIGH);
+  digitalWrite(RIGHT_ENABLE_PIN, HIGH);
+  
   // Set up step timer
   Timer1.initialize(calcStepPeriod(5)); // default: 5 mm/sec
   Timer1.attachInterrupt(step);
@@ -109,21 +102,21 @@ void onPacket(const uint8_t* buffer, size_t size)
   // Add the received command to the queue
   switch(buffer[0])
   {
-    // set speed
-    case 1:
-      cmd_queue[queue_write_ptr].type = 1;
+    case CMD_SET_SPEED:
+      cmd_queue[queue_write_ptr].type = CMD_SET_SPEED;
       cmd_queue[queue_write_ptr].setSpeedCmd.speed = buffer[1];
       break;
-    // select tool
-    case 2:
-      cmd_queue[queue_write_ptr].type = 2;
+    case CMD_SELECT_TOOL:
+      cmd_queue[queue_write_ptr].type = CMD_SELECT_TOOL;
       cmd_queue[queue_write_ptr].selectToolCmd.tool = buffer[1];
       break;
-    // move
-    case 3:
-      cmd_queue[queue_write_ptr].type = 3;
+    case CMD_MOVE:
+      cmd_queue[queue_write_ptr].type = CMD_MOVE;
       cmd_queue[queue_write_ptr].moveCmd.left_motor_steps = buffer[1];
       cmd_queue[queue_write_ptr].moveCmd.right_motor_steps = buffer[2];
+      break;
+    case CMD_DISABLE_MOTORS:
+      cmd_queue[queue_write_ptr].type = CMD_DISABLE_MOTORS;
       break;
   }
 

@@ -112,6 +112,10 @@ function sendFile(liner, port)
             }
             else
             {
+                // Disable motors
+                port.write(cobs.encode(new Buffer([4])));
+                port.write(new Buffer([0x00]));                
+                
                 return console.log('Info: ', 'Step file has been sent to the client');
             }
         }
