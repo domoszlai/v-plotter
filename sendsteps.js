@@ -112,7 +112,7 @@ function sendFile(liner, port)
             }
             else
             {
-                return console.log('Info: ', 'Step file has bben sent to the client');
+                return console.log('Info: ', 'Step file has been sent to the client');
             }
         }
     }

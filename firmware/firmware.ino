@@ -53,7 +53,7 @@ uint8_t cmdsRequested = 0;
 
 unsigned long calcStepPeriod(uint8_t speed)
 {
-  return (unsigned long)((1.0/STEPS_PER_MM)*1000000);
+  return (unsigned long)(1000000 / (STEPS_PER_MM * speed));
 }
 
 void setup()
@@ -70,6 +70,11 @@ void setup()
 // Step interrupt
 void step(void)
 {
+  if(nr_cmds>0)
+  {
+    queue_read_ptr = queue_read_ptr++ % QUEUE_SIZE;
+    nr_cmds--;  
+  }
 }
 
 void loop()
