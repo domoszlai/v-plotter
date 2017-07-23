@@ -49,7 +49,7 @@ volatile int nr_cmds = 0;
 PacketSerial serial;
 
 // The number of commands requested and still pending
-uint8_t cmdsRequested;
+uint8_t cmdsRequested = 0;
 
 unsigned long calcStepPeriod(uint8_t speed)
 {
@@ -128,6 +128,8 @@ void onPacket(const uint8_t* buffer, size_t size)
   noInterrupts(); 
   nr_cmds++;
   interrupts();
+
+  if(cmdsRequested>0) cmdsRequested--;
 }
 
 

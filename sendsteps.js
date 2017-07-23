@@ -89,17 +89,17 @@ function sendFile(liner, port)
                 switch(cmd)
                 {
                     // set speed
-                    case '1':
+                    case 1:
                         var speed = parseInt(parts[1]);
-                        if(speed < 0 || ])); > 100) speed = 5; // ensure limits
+                        if(speed < 0 || speed > 100) speed = 5; // ensure limits
                         arr.push(speed);
                         break;
                     // set tool
-                    case '2':
+                    case 2:
                         arr.push(parseInt(parts[1]));
                         break;
                     // move
-                    case '3':
+                    case 3:
                         arr.push(parseInt(parts[1]));
                         arr.push(parseInt(parts[2]));
                         break;
@@ -120,7 +120,7 @@ function sendFile(liner, port)
     var parser = port.pipe(new Delimiter({delimiter: new Buffer([0x00])}));
     parser.on('data', function (data) {
         var nrSteps = cobs.decode(data)[0];
-        console.log('Steps requested: ', cobs.decode(data));
+        console.log('Commands requested: ', cobs.decode(data));
         sendSteps(nrSteps);
     });
 }
