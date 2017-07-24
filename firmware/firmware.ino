@@ -30,10 +30,13 @@ uint8_t cmds_requested = 0;
 
 // The number of steps must be taken before the next command needs to be processed.
 // Decreased in stepISR 
-uint8_t nr_steps_prepared = 0;
+volatile uint8_t nr_steps_prepared = 0;
 // Step interval must be set to this after the next execution of the step timer
 // Step interval is set in the ISR, this way it can be ensured that intervals always have the full length 
 unsigned long next_speed = 0;
+
+// Used to avoid step ISR nesting of the "Stepper Driver Interrupt". Should never occur though.
+volatile uint8_t stepper_isr_busy = false;   
 
 unsigned long calc_step_period(uint8_t speed)
 {
@@ -61,16 +64,20 @@ void setup()
   
   // Set up step timer
   Timer1.initialize(calc_step_period(5)); // default: 5 mm/sec
-  Timer1.attachInterrupt(stepISR);
+  Timer1.attachInterrupt(stepper_isr);
   
   // We must specify a packet handler method so that
   serial.setPacketHandler(&onPacket);
   serial.begin(115200);
 }
 
-// Step interrupt
-void stepISR(void)
+// Stepper Driver Interrupt
+void stepper_isr(void)
 {
+  if (stepper_isr_busy) { return; } // The busy-flag is used to avoid reentering this interrupt
+  stepper_isr_busy = true;
+
+  stepper_isr_busy = false;
 }
 
 // One iteration of this loop is supposed to be quick, so steps can be prepared
