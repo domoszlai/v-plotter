@@ -2,6 +2,8 @@
 
 Step generator and simulator for a simple V plotter. The math is explained at [http://dlacko.blogspot.com/2017/06/v-plotter-math-coordinate-transformation-rotation-compensation.html].
 
+For an online demo of the simulator, visit [https://domoszlai.github.io/v-plotter/simulator/sym_gcode.html].
+
 ## Usage
 
 Type
@@ -10,7 +12,7 @@ Type
 
 It will write the result to the standard output which can be used by the simulator, or by a real V plotter.
 
-For a real V plottter, you also want to configure the generator by editing `gensteps.js`, e.g. the resolution of the stepper motors and other stuff
+For a real V-plotter, you also want to configure the generator by editing `gensteps.js`, e.g. the resolution of the stepper motors and other stuff
 visualized by `configuration.png`.
 
 ## Limitations
