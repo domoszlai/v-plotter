@@ -1,7 +1,7 @@
 ## Synopsis
 
 A Box2D based V (hanging) plotter simulator. The underlying physics engine enables to test
-the algorithms for a V plotter without risking a bug in the simulator engine.
+the algorithms for a V-plotter in a fast and convenient way without building an actual machine.
 It is also a very nice way to test my SVG to GCode converter, [juicy-gcode](https://github.com/domoszlai/juicy-gcode).
 
 ## Usage
