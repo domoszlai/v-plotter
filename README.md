@@ -1,8 +1,8 @@
 ## Synopsis
 
-Step generator and simulator for a simple V plotter. The math is explained at [http://dlacko.org/blog/2017/06/04/v-plotter-math-coordinate-transformation-rotation-compensation/].
+Step generator and simulator for a simple V plotter. The math is explained at http://dlacko.org/blog/2017/06/04/v-plotter-math-coordinate-transformation-rotation-compensation/.
 
-For an online demo of the simulator, visit [http://dlacko.org/v-plotter/simulator/sym_gcode.html].
+For an online demo of the simulator, visit http://dlacko.org/v-plotter/simulator/sym_gcode.html.
 
 ## Usage
 
