@@ -1,6 +1,6 @@
 ## Synopsis
 
-Step generator and simulator for a simple V plotter. The math is explained at [http://dlacko.blogspot.com/2017/06/v-plotter-math-coordinate-transformation-rotation-compensation.html].
+Step generator and simulator for a simple V plotter. The math is explained at [http://dlacko.org/blog/2017/06/04/v-plotter-math-coordinate-transformation-rotation-compensation/](http://dlacko.org/blog/2017/06/04/v-plotter-math-coordinate-transformation-rotation-compensation/).
 
 For an online demo of the simulator, visit [https://domoszlai.github.io/v-plotter/simulator/sym_gcode.html].
 
@@ -24,8 +24,3 @@ The plotter draws when the Z coordinate is 0.
 ## Bugs
 
 Please file an issue if you run into a problem (or drop me an email to dlacko@gmail.com).
-
-
-
-
-
